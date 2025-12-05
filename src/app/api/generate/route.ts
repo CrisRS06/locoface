@@ -78,6 +78,7 @@ export async function POST(req: Request) {
       image: openaiImage,
       prompt: STICKER_PROMPT,
       size: '1024x1024',
+      background: 'transparent',
     });
 
     // 5. Extract base64 image from response

@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ImagePlus,
   Upload,
   Camera,
   AlertCircle,
@@ -11,6 +10,7 @@ import {
   Download,
   Sparkles,
 } from 'lucide-react';
+import Image from 'next/image';
 import { Hero } from '@/components/sections/Hero';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +18,7 @@ import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Confetti } from '@/components/ui/Confetti';
 import { ShareButtons } from '@/components/ui/ShareButtons';
+import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
 import { cn } from '@/lib/utils';
 
@@ -246,101 +247,151 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="w-full max-w-md mx-auto px-4 py-12 z-10"
+            className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            <div className="text-center mb-8">
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="w-16 h-16 gradient-cta rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-coral/30"
-              >
-                <ImagePlus className="w-8 h-8 text-white" />
-              </motion.div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                Upload Your Photo
-              </h2>
-              <p className="text-slate-600">
-                Best results with a clear, front-facing photo
-              </p>
-            </div>
+            {/* Floating Decorations */}
+            <FloatingDecorations />
 
-            {/* Upload Zone */}
-            <GlassCard
-              variant="elevated"
-              padding="lg"
-              className={cn(
-                'upload-zone cursor-pointer transition-all',
-                dragActive && 'upload-zone-dragover'
-              )}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-20 h-20 rounded-full bg-lavender/50 flex items-center justify-center mb-4">
-                  <Upload className="w-10 h-10 text-lavender-dark" />
-                </div>
-                <p className="text-lg font-medium text-slate-700 mb-1">
-                  Drop your photo here
-                </p>
-                <p className="text-sm text-slate-500">
-                  or click to browse
+            <div className="w-full max-w-md mx-auto">
+              {/* Logo */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex justify-center mb-6"
+              >
+                <Image
+                  src="/logo-full.png"
+                  alt="LocoFace"
+                  width={140}
+                  height={140}
+                  className="drop-shadow-lg"
+                />
+              </motion.div>
+
+              {/* Title */}
+              <div className="text-center mb-8">
+                <h2 className="heading-section text-slate-800 mb-2">
+                  Upload Your Photo
+                </h2>
+                <p className="text-slate-600">
+                  Best results with a clear, front-facing photo
                 </p>
               </div>
-            </GlassCard>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="coral"
-                glow
-                className="flex-1"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-5 h-5 mr-2" />
-                Choose Photo
-              </Button>
+              {/* Upload Zone with decorations */}
+              <div className="relative">
+                {/* Corner decorations */}
+                <motion.div
+                  className="absolute -top-3 -left-3 z-10"
+                  animate={{ rotate: [0, 10, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <DoodleStar size={24} className="text-star-green" />
+                </motion.div>
+                <motion.div
+                  className="absolute -top-2 -right-4 z-10"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+                >
+                  <DoodleHeart size={20} className="text-coral-light" filled />
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-3 -left-4 z-10"
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 2.8, repeat: Infinity, delay: 0.3 }}
+                >
+                  <DoodleHeart size={18} className="text-heart-mint" />
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-2 -right-3 z-10"
+                  animate={{ rotate: [0, -10, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, delay: 0.7 }}
+                >
+                  <DoodleStar size={20} className="text-lavender-dark" />
+                </motion.div>
 
-              {/* Camera button for mobile */}
-              <Button
-                variant="secondary"
-                onClick={handleCameraCapture}
-                className="sm:hidden"
-                aria-label="Take photo"
+                <GlassCard
+                  variant="elevated"
+                  padding="lg"
+                  className={cn(
+                    'upload-zone cursor-pointer transition-all border-2 border-white/50',
+                    dragActive && 'upload-zone-dragover border-coral'
+                  )}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <motion.div
+                      className="w-20 h-20 rounded-full bg-gradient-to-br from-lavender/60 to-coral/30 flex items-center justify-center mb-4 shadow-lg"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Upload className="w-10 h-10 text-lavender-dark" />
+                    </motion.div>
+                    <p className="text-lg font-semibold text-slate-700 mb-1">
+                      Drop your photo here
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      or click to browse
+                    </p>
+                  </div>
+                </GlassCard>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="coral"
+                  glow
+                  className="flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  Choose Photo
+                </Button>
+
+                {/* Camera button for mobile */}
+                <Button
+                  variant="secondary"
+                  onClick={handleCameraCapture}
+                  className="sm:hidden"
+                  aria-label="Take photo"
+                >
+                  <Camera className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Photo tips */}
+              <div className="mt-6 p-4 bg-mint-green/20 rounded-2xl border border-mint-green/30">
+                <p className="text-sm text-slate-600 text-center">
+                  <Sparkles className="w-4 h-4 inline mr-1 text-star-green" />
+                  Tip: Good lighting and a clear face work best!
+                </p>
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl"
+                >
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p className="text-sm">{error}</p>
+                </motion.div>
+              )}
+
+              {/* Back button */}
+              <button
+                onClick={() => setAppState('hero')}
+                className="mt-6 text-sm text-slate-500 hover:text-coral mx-auto block transition-colors"
               >
-                <Camera className="w-5 h-5" />
-              </Button>
+                &larr; Back to home
+              </button>
             </div>
-
-            {/* Photo tips */}
-            <div className="mt-6 p-4 bg-lavender/20 rounded-2xl">
-              <p className="text-sm text-slate-600 text-center">
-                <Sparkles className="w-4 h-4 inline mr-1 text-coral" />
-                Tip: Good lighting and a clear face work best!
-              </p>
-            </div>
-
-            {/* Error message */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl"
-              >
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </motion.div>
-            )}
-
-            {/* Back button */}
-            <button
-              onClick={() => setAppState('hero')}
-              className="mt-6 text-sm text-slate-500 hover:text-slate-700 mx-auto block"
-            >
-              &larr; Back to home
-            </button>
           </motion.div>
         )}
 
@@ -351,34 +402,101 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="w-full max-w-md mx-auto px-4 py-12 z-10 flex flex-col items-center justify-center min-h-[80vh]"
+            className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            {/* Preview image with overlay */}
-            <div className="relative w-64 h-64 mb-8">
-              {previewImage ? (
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="w-full h-full rounded-3xl overflow-hidden shadow-xl"
-                >
-                  <img
-                    src={previewImage}
-                    alt="Processing"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full gradient-cta flex items-center justify-center animate-pulse-soft">
-                      <Sparkles className="w-8 h-8 text-white" />
+            {/* Floating Decorations */}
+            <FloatingDecorations />
+
+            {/* Logo */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mb-6"
+            >
+              <Image
+                src="/logo-full.png"
+                alt="LocoFace"
+                width={120}
+                height={120}
+                className="drop-shadow-lg"
+              />
+            </motion.div>
+
+            {/* Preview image with overlay and decorations */}
+            <div className="relative">
+              {/* Corner decorations */}
+              <motion.div
+                className="absolute -top-4 -left-4 z-20"
+                animate={{ rotate: [0, 15, 0], scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <DoodleStar size={28} className="text-star-green" />
+              </motion.div>
+              <motion.div
+                className="absolute -top-3 -right-5 z-20"
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
+              >
+                <DoodleHeart size={22} className="text-coral-light" filled />
+              </motion.div>
+              <motion.div
+                className="absolute -bottom-4 -left-5 z-20"
+                animate={{ rotate: [0, -10, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+              >
+                <DoodleHeart size={20} className="text-heart-mint" />
+              </motion.div>
+              <motion.div
+                className="absolute -bottom-3 -right-4 z-20"
+                animate={{ rotate: [0, 20, 0], scale: [1, 1.15, 1] }}
+                transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
+              >
+                <DoodleStar size={24} className="text-lavender-dark" />
+              </motion.div>
+
+              <div className="w-72 h-72 sm:w-80 sm:h-80 mb-8">
+                {previewImage ? (
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-full h-full rounded-3xl overflow-hidden shadow-xl bg-white p-2"
+                    style={{ boxShadow: '0 0 0 4px white, 0 10px 40px rgba(168, 144, 196, 0.3)' }}
+                  >
+                    <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                      <img
+                        src={previewImage}
+                        alt="Processing"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-lavender/40 via-white/50 to-coral/30 backdrop-blur-sm flex items-center justify-center">
+                        <motion.div
+                          className="w-20 h-20 rounded-full bg-gradient-to-br from-coral to-coral-light flex items-center justify-center shadow-lg"
+                          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <Sparkles className="w-10 h-10 text-white" />
+                        </motion.div>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <Skeleton variant="rounded" className="w-full h-full" />
-              )}
+                  </motion.div>
+                ) : (
+                  <Skeleton variant="rounded" className="w-full h-full" />
+                )}
+              </div>
             </div>
 
             {/* Progress Indicator */}
             <ProgressIndicator currentStage={processingStage} />
+
+            {/* Fun message */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-sm text-slate-500 mt-4 text-center"
+            >
+              Making your sticker extra cute...
+            </motion.p>
           </motion.div>
         )}
 
@@ -389,88 +507,142 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="w-full max-w-md mx-auto px-4 py-12 z-10"
+            className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            {/* Success message */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-6"
-            >
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-dusty-lime/50 text-slate-700 rounded-full text-sm font-medium">
-                <Sparkles className="w-4 h-4 text-green-600" />
-                Your sticker is ready!
-              </span>
-            </motion.div>
+            {/* Floating Decorations */}
+            <FloatingDecorations />
 
-            {/* Sticker Display */}
-            <GlassCard variant="elevated" padding="lg" className="mb-6">
+            <div className="w-full max-w-md mx-auto">
+              {/* Logo */}
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', delay: 0.1 }}
-                className="animate-celebrate"
+                className="flex justify-center mb-4"
               >
-                <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-lavender/20 to-coral/20 mb-4">
-                  <img
-                    src={stickerUrl}
-                    alt="Your sticker"
-                    className="w-full h-full object-contain sticker-image"
-                  />
-                </div>
+                <Image
+                  src="/logo-full.png"
+                  alt="LocoFace"
+                  width={120}
+                  height={120}
+                  className="drop-shadow-lg"
+                />
               </motion.div>
 
-              {/* Download Button - Free (paywall disabled) */}
-              <Button
-                variant="coral"
-                glow
-                size="lg"
-                className="w-full mb-3"
-                onClick={() => {
-                  if (stickerUrl) {
-                    const link = document.createElement('a');
-                    link.href = stickerUrl;
-                    link.download = 'locoface-sticker.png';
-                    link.click();
-                  }
-                }}
+              {/* Success message - Gen Z style */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-6"
               >
-                <Download className="w-5 h-5 mr-2" />
-                Download Sticker
+                <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-mint-green/30 text-slate-700 rounded-full text-sm font-semibold shadow-sm border border-mint-green/40">
+                  <Sparkles className="w-4 h-4 text-star-green" />
+                  Your sticker is ready!
+                </span>
+              </motion.div>
+
+              {/* Sticker Display with decorations */}
+              <div className="relative mb-6">
+                {/* Corner decorations */}
+                <motion.div
+                  className="absolute -top-4 -left-4 z-20"
+                  animate={{ rotate: [0, 15, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <DoodleStar size={28} className="text-star-green" />
+                </motion.div>
+                <motion.div
+                  className="absolute -top-3 -right-5 z-20"
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }}
+                >
+                  <DoodleHeart size={24} className="text-coral-light" filled />
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-4 -left-5 z-20"
+                  animate={{ rotate: [0, -15, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+                >
+                  <DoodleHeart size={22} className="text-heart-mint" filled />
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-3 -right-4 z-20"
+                  animate={{ rotate: [0, 20, 0], scale: [1, 1.15, 1] }}
+                  transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
+                >
+                  <DoodleStar size={26} className="text-lavender-dark" />
+                </motion.div>
+
+                <GlassCard variant="elevated" padding="lg" className="border-2 border-white/50">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', delay: 0.1 }}
+                  >
+                    <div
+                      className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-lavender/20 via-white to-coral/20 mb-4 p-2"
+                      style={{ boxShadow: 'inset 0 0 20px rgba(168, 144, 196, 0.1)' }}
+                    >
+                      <img
+                        src={stickerUrl}
+                        alt="Your sticker"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Download Button */}
+                  <Button
+                    variant="coral"
+                    glow
+                    size="lg"
+                    className="w-full mb-3"
+                    onClick={() => {
+                      if (stickerUrl) {
+                        const link = document.createElement('a');
+                        link.href = stickerUrl;
+                        link.download = 'locoface-sticker.png';
+                        link.click();
+                      }
+                    }}
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download Sticker
+                  </Button>
+
+                  {/* Share Buttons */}
+                  <div className="pt-4 border-t border-slate-200/50">
+                    <ShareButtons
+                      url={typeof window !== 'undefined' ? window.location.href : ''}
+                      title="Check out my AI sticker!"
+                      text="I made this cute chibi sticker with Locoface!"
+                      variant="default"
+                    />
+                  </div>
+                </GlassCard>
+              </div>
+
+              {/* Create Another Button */}
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={handleReset}
+              >
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Create Another Sticker
               </Button>
 
-              {/* Share Buttons */}
-              <div className="pt-4 border-t border-slate-200/50">
-                <ShareButtons
-                  url={typeof window !== 'undefined' ? window.location.href : ''}
-                  title="Check out my AI sticker!"
-                  text="I made this cute chibi sticker with Locoface!"
-                  variant="default"
-                />
-              </div>
-            </GlassCard>
-
-            {/* Create Another Button */}
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={handleReset}
-            >
-              <RefreshCw className="w-5 h-5 mr-2" />
-              Create Another Sticker
-            </Button>
-
-            {/* Error message */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl"
-              >
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </motion.div>
-            )}
+              {/* Error message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl"
+                >
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p className="text-sm">{error}</p>
+                </motion.div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

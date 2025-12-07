@@ -57,6 +57,42 @@ create index if not exists idx_preview_images_status on public.preview_images(st
 create index if not exists idx_orders_preview_id on public.orders(preview_id);
 create index if not exists idx_orders_download_token on public.orders(download_token);
 
--- 7. Enable Realtime (optional, for live updates)
+-- 7. Promo Codes Table (for free stickers)
+create table if not exists public.promo_codes (
+  id uuid not null default gen_random_uuid() primary key,
+  code text not null unique,
+  max_uses integer not null default 1,  -- Single use by default
+  current_uses integer not null default 0,
+  expires_at timestamp with time zone null,
+  is_active boolean not null default true,
+  created_at timestamp with time zone not null default now()
+);
+
+-- 8. Add promo_code_id to orders for tracking
+alter table public.orders
+add column if not exists promo_code_id uuid references public.promo_codes(id);
+
+-- 9. RLS for promo_codes
+alter table public.promo_codes enable row level security;
+
+-- Only service role can access promo codes (for security)
+create policy "Allow service role full access to promo_codes"
+  on public.promo_codes for all
+  using (auth.role() = 'service_role');
+
+-- 10. Index for fast promo code lookups
+create index if not exists idx_promo_codes_code on public.promo_codes(code);
+
+-- 11. Enable Realtime (optional, for live updates)
 alter publication supabase_realtime add table preview_images;
 alter publication supabase_realtime add table orders;
+
+-- ============================================
+-- EXAMPLE: Create a test promo code
+-- ============================================
+-- INSERT INTO promo_codes (code, max_uses) VALUES ('FREESTICKER', 1);
+--
+-- Generate 10 random single-use codes:
+-- INSERT INTO promo_codes (code, max_uses)
+-- SELECT 'LOCO' || upper(substr(md5(random()::text), 1, 6)), 1
+-- FROM generate_series(1, 10);

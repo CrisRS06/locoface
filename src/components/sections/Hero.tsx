@@ -1,17 +1,21 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { Upload, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SocialProof } from '@/components/ui/SocialProof';
 import { HeroShowcase } from '@/components/ui/HeroShowcase';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 
 interface HeroProps {
-  onCtaClick: () => void;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string | null;
 }
 
-export function Hero({ onCtaClick }: HeroProps) {
+export function Hero({ onFileSelect, error }: HeroProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-12 pb-20 overflow-hidden">
       {/* Background Gradient Blobs - Updated colors */}
@@ -90,7 +94,16 @@ export function Hero({ onCtaClick }: HeroProps) {
           AI-powered chibi stickers in seconds. No account needed.
         </motion.p>
 
-        {/* CTA Button - First person phrasing */}
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={onFileSelect}
+          className="hidden"
+        />
+
+        {/* CTA Button - Opens file picker directly */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -101,12 +114,28 @@ export function Hero({ onCtaClick }: HeroProps) {
             variant="coral"
             size="xl"
             glow
-            onClick={onCtaClick}
+            onClick={() => fileInputRef.current?.click()}
             className="text-lg"
           >
-            Create My Sticker Free
+            <Upload className="w-5 h-5 mr-2" />
+            Upload Your Photo
           </Button>
         </motion.div>
+
+        {/* Error message */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 flex items-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-2xl max-w-md"
+            >
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Social Proof */}
         <motion.div

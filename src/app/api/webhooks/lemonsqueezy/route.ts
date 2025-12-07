@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { generatePromoCode, sendStarterPackCodes } from '@/lib/email';
 
 export async function POST(req: Request) {
     try {
@@ -18,8 +19,68 @@ export async function POST(req: Request) {
         const eventName = meta.event_name;
 
         if (eventName === 'order_created') {
-            const orderId = meta.custom_data?.order_id;
+            const customData = meta.custom_data || {};
+            const orderId = customData.order_id;
+            const packId = customData.pack_id;
+            const purchaseType = customData.type;
 
+            // Handle Starter Pack purchase
+            if (purchaseType === 'starter_pack' && packId) {
+                const buyerEmail = data.attributes.user_email;
+
+                // 1. Generate 10 unique promo codes
+                const codes: string[] = [];
+                for (let i = 0; i < 10; i++) {
+                    codes.push(generatePromoCode());
+                }
+
+                // 2. Insert promo codes into database
+                const promoCodesData = codes.map(code => ({
+                    code,
+                    discount_percent: 100, // Free sticker
+                    max_uses: 1,
+                    current_uses: 0,
+                    is_active: true,
+                    pack_id: packId,
+                    buyer_email: buyerEmail,
+                }));
+
+                const { error: codesError } = await supabaseAdmin
+                    .from('promo_codes')
+                    .insert(promoCodesData);
+
+                if (codesError) {
+                    console.error('Failed to insert promo codes:', codesError);
+                    return NextResponse.json({ error: 'Failed to create codes' }, { status: 500 });
+                }
+
+                // 3. Update credit_pack status
+                await supabaseAdmin
+                    .from('credit_packs')
+                    .update({
+                        buyer_email: buyerEmail,
+                        lemonsqueezy_order_id: data.id,
+                        status: 'paid',
+                        codes_generated: 10,
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', packId);
+
+                // 4. Send email with codes
+                try {
+                    await sendStarterPackCodes({
+                        to: buyerEmail,
+                        codes,
+                    });
+                } catch (emailError) {
+                    console.error('Failed to send email:', emailError);
+                    // Don't fail the webhook - codes are in DB
+                }
+
+                return NextResponse.json({ received: true, type: 'starter_pack' });
+            }
+
+            // Handle individual sticker purchase (existing logic)
             if (orderId) {
                 // 1. Get preview data
                 const { data: order } = await supabaseAdmin
@@ -44,7 +105,7 @@ export async function POST(req: Request) {
                         await supabaseAdmin
                             .from('orders')
                             .update({
-                                status: 'paid', // or 'completed' directly
+                                status: 'paid',
                                 lemonsqueezy_order_id: data.id,
                                 hd_base64: preview.preview_base64,
                                 download_token: downloadToken,

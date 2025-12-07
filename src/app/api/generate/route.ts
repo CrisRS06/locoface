@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI, { toFile } from 'openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { createPreviewWithLock } from '@/utils/blur';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -97,15 +98,18 @@ export async function POST(req: Request) {
     const imageBase64 = imageData.b64_json;
     console.log('OpenAI image generated successfully');
 
-    // 6. Clean image (paywall disabled - no watermark)
-    const cleanBase64 = `data:image/png;base64,${imageBase64}`;
+    // 6. Create HD (clean) and preview (blurred with lock) versions
+    const hdBuffer = Buffer.from(imageBase64, 'base64');
+    const hdBase64 = `data:image/png;base64,${imageBase64}`;
+    const previewBase64 = await createPreviewWithLock(hdBuffer);
 
-    // 7. Update Supabase with results
+    // 7. Update Supabase with both versions
     const { error: updateError } = await supabaseAdmin
       .from('preview_images')
       .update({
         status: 'ready',
-        preview_base64: cleanBase64,
+        preview_base64: hdBase64, // HD version stored for after payment
+        watermarked_base64: previewBase64, // Blurred version for display
       })
       .eq('id', previewId);
 
@@ -113,11 +117,11 @@ export async function POST(req: Request) {
       console.error('Supabase update error:', updateError);
     }
 
-    // Return clean image directly (paywall disabled)
+    // Return blurred preview (paywall enabled)
     return NextResponse.json({
       success: true,
       previewId,
-      watermarkedUrl: cleanBase64, // No watermark for now
+      previewUrl: previewBase64, // Blurred with lock
     });
 
   } catch (error) {

@@ -1,16 +1,15 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Upload,
-  Camera,
-  AlertCircle,
   RefreshCw,
   Download,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Hero } from '@/components/sections/Hero';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
@@ -18,34 +17,45 @@ import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Confetti } from '@/components/ui/Confetti';
 import { ShareButtons } from '@/components/ui/ShareButtons';
+import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
-import { cn } from '@/lib/utils';
 
 // App States
-type AppState = 'hero' | 'upload' | 'processing' | 'results';
-type ProcessingStage = 'uploading' | 'analyzing' | 'generating' | 'ready';
+type AppState = 'hero' | 'processing' | 'checkout' | 'results';
+type ProcessingStage = 'preparing' | 'generating';
 
 export default function Home() {
   // State management
   const [appState, setAppState] = useState<AppState>('hero');
-  const [processingStage, setProcessingStage] = useState<ProcessingStage>('uploading');
-  const [stickerUrl, setStickerUrl] = useState<string | null>(null);
+  const [processingStage, setProcessingStage] = useState<ProcessingStage>('preparing');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Blurred preview
+  const [hdUrl, setHdUrl] = useState<string | null>(null); // HD unlocked version
   const [previewId, setPreviewId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
-  const [dragActive, setDragActive] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // LemonSqueezy checkout hook
   const { openCheckout } = useLemonSqueezy({
-    onSuccess: () => {
-      // Handle successful payment
-      console.log('Payment successful!');
+    onSuccess: async (data) => {
+      console.log('Payment successful!', data);
       setIsBuying(false);
+      // Fetch the HD version after successful payment
+      if (previewId) {
+        try {
+          const response = await fetch(`/api/orders/complete?previewId=${previewId}`);
+          const result = await response.json();
+          if (result.hdUrl) {
+            setHdUrl(result.hdUrl);
+            setShowConfetti(true);
+            setAppState('results');
+          }
+        } catch (err) {
+          console.error('Failed to get HD version:', err);
+        }
+      }
     },
     onClose: () => {
       setIsBuying(false);
@@ -67,10 +77,11 @@ export default function Home() {
 
     // Reset state and start processing
     setError(null);
-    setStickerUrl(null);
+    setPreviewUrl(null);
+    setHdUrl(null);
     setPreviewId(undefined);
     setAppState('processing');
-    setProcessingStage('uploading');
+    setProcessingStage('preparing');
 
     // Show preview of original image
     const reader = new FileReader();
@@ -78,19 +89,15 @@ export default function Home() {
     reader.readAsDataURL(file);
 
     try {
-      // Stage 1: Uploading
-      setProcessingStage('uploading');
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Brief pause for UX
+      // Stage 1: Preparing (brief)
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Stage 2: Analyzing
-      setProcessingStage('analyzing');
+      // Stage 2: Generating (API call)
+      setProcessingStage('generating');
 
       const formData = new FormData();
       formData.append('image', file);
       formData.append('userId', 'guest');
-
-      // Stage 3: Generating
-      setProcessingStage('generating');
 
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -103,59 +110,22 @@ export default function Home() {
         throw new Error(data.error || 'Failed to process image');
       }
 
-      // Stage 4: Ready
-      setProcessingStage('ready');
-      setStickerUrl(data.watermarkedUrl);
+      setPreviewUrl(data.previewUrl); // Blurred version
       setPreviewId(data.previewId);
 
-      // Brief delay before showing results
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Trigger celebration!
-      setShowConfetti(true);
-      setAppState('results');
+      // Go to checkout instead of results
+      setAppState('checkout');
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setAppState('upload');
+      setAppState('hero');
     }
   };
 
-  // File handlers
+  // File handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) processImage(file);
-  };
-
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processImage(file);
-  }, []);
-
-  // Camera capture (mobile)
-  const handleCameraCapture = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'user';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) processImage(file);
-    };
-    input.click();
   };
 
   // Purchase handler
@@ -185,24 +155,67 @@ export default function Home() {
     }
   };
 
+  // Promo code handler
+  const handlePromoCode = async (code: string): Promise<boolean> => {
+    if (!previewId) return false;
+
+    try {
+      const response = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, previewId }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid && data.hdUrl) {
+        setHdUrl(data.hdUrl);
+        setShowConfetti(true);
+        setAppState('results');
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('Promo validation error:', err);
+      return false;
+    }
+  };
+
+  // Starter Pack purchase handler
+  const handleStarterPackPurchase = async () => {
+    setIsBuying(true);
+
+    try {
+      const response = await fetch('/api/checkout/starter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+
+      if (data.checkoutUrl) {
+        openCheckout(data.checkoutUrl);
+      } else {
+        throw new Error('Failed to create checkout');
+      }
+    } catch (err) {
+      console.error('Starter pack checkout error:', err);
+      setError('Failed to start checkout. Please try again.');
+      setIsBuying(false);
+    }
+  };
+
   // Reset to create another
   const handleReset = () => {
-    setStickerUrl(null);
+    setPreviewUrl(null);
+    setHdUrl(null);
     setPreviewId(undefined);
     setPreviewImage(null);
     setError(null);
     setShowConfetti(false);
     setAppState('hero');
-    setProcessingStage('uploading');
-  };
-
-  // Start creating from hero
-  const handleStartCreating = () => {
-    setAppState('upload');
-    // Scroll to upload area smoothly
-    setTimeout(() => {
-      fileInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    setProcessingStage('preparing');
   };
 
   return (
@@ -217,14 +230,20 @@ export default function Home() {
         <div className="absolute bottom-40 left-20 w-80 h-80 bg-coral rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
       </div>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
+      {/* Footer Links - Fixed position, discrete */}
+      <div className="fixed bottom-4 left-4 flex items-center gap-3 text-xs text-slate-300 z-50">
+        <Link href="/admin" className="hover:text-slate-500 transition-colors">
+          Admin
+        </Link>
+        <span className="text-slate-200">·</span>
+        <Link href="/terms" className="hover:text-slate-500 transition-colors">
+          Terms
+        </Link>
+        <span className="text-slate-200">·</span>
+        <Link href="/privacy" className="hover:text-slate-500 transition-colors">
+          Privacy
+        </Link>
+      </div>
 
       {/* HERO STATE */}
       <AnimatePresence mode="wait">
@@ -236,162 +255,7 @@ export default function Home() {
             exit={{ opacity: 0, y: -20 }}
             className="w-full"
           >
-            <Hero onCtaClick={handleStartCreating} />
-          </motion.div>
-        )}
-
-        {/* UPLOAD STATE */}
-        {appState === 'upload' && (
-          <motion.div
-            key="upload"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
-          >
-            {/* Floating Decorations */}
-            <FloatingDecorations />
-
-            <div className="w-full max-w-md mx-auto">
-              {/* Logo */}
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="flex justify-center mb-6"
-              >
-                <Image
-                  src="/logo-full.png"
-                  alt="LocoFace"
-                  width={140}
-                  height={140}
-                  className="drop-shadow-lg"
-                />
-              </motion.div>
-
-              {/* Title */}
-              <div className="text-center mb-8">
-                <h2 className="heading-section text-slate-800 mb-2">
-                  Upload Your Photo
-                </h2>
-                <p className="text-slate-600">
-                  Best results with a clear, front-facing photo
-                </p>
-              </div>
-
-              {/* Upload Zone with decorations */}
-              <div className="relative">
-                {/* Corner decorations */}
-                <motion.div
-                  className="absolute -top-3 -left-3 z-10"
-                  animate={{ rotate: [0, 10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <DoodleStar size={24} className="text-star-green" />
-                </motion.div>
-                <motion.div
-                  className="absolute -top-2 -right-4 z-10"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-                >
-                  <DoodleHeart size={20} className="text-coral-light" filled />
-                </motion.div>
-                <motion.div
-                  className="absolute -bottom-3 -left-4 z-10"
-                  animate={{ scale: [1, 1.15, 1] }}
-                  transition={{ duration: 2.8, repeat: Infinity, delay: 0.3 }}
-                >
-                  <DoodleHeart size={18} className="text-heart-mint" />
-                </motion.div>
-                <motion.div
-                  className="absolute -bottom-2 -right-3 z-10"
-                  animate={{ rotate: [0, -10, 0] }}
-                  transition={{ duration: 3.5, repeat: Infinity, delay: 0.7 }}
-                >
-                  <DoodleStar size={20} className="text-lavender-dark" />
-                </motion.div>
-
-                <GlassCard
-                  variant="elevated"
-                  padding="lg"
-                  className={cn(
-                    'upload-zone cursor-pointer transition-all border-2 border-white/50',
-                    dragActive && 'upload-zone-dragover border-coral'
-                  )}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <motion.div
-                      className="w-20 h-20 rounded-full bg-gradient-to-br from-lavender/60 to-coral/30 flex items-center justify-center mb-4 shadow-lg"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Upload className="w-10 h-10 text-lavender-dark" />
-                    </motion.div>
-                    <p className="text-lg font-semibold text-slate-700 mb-1">
-                      Drop your photo here
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      or click to browse
-                    </p>
-                  </div>
-                </GlassCard>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-6">
-                <Button
-                  variant="coral"
-                  glow
-                  className="flex-1"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Choose Photo
-                </Button>
-
-                {/* Camera button for mobile */}
-                <Button
-                  variant="secondary"
-                  onClick={handleCameraCapture}
-                  className="sm:hidden"
-                  aria-label="Take photo"
-                >
-                  <Camera className="w-5 h-5" />
-                </Button>
-              </div>
-
-              {/* Photo tips */}
-              <div className="mt-6 p-4 bg-mint-green/20 rounded-2xl border border-mint-green/30">
-                <p className="text-sm text-slate-600 text-center">
-                  <Sparkles className="w-4 h-4 inline mr-1 text-star-green" />
-                  Tip: Good lighting and a clear face work best!
-                </p>
-              </div>
-
-              {/* Error message */}
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl"
-                >
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <p className="text-sm">{error}</p>
-                </motion.div>
-              )}
-
-              {/* Back button */}
-              <button
-                onClick={() => setAppState('hero')}
-                className="mt-6 text-sm text-slate-500 hover:text-coral mx-auto block transition-colors"
-              >
-                &larr; Back to home
-              </button>
-            </div>
+            <Hero onFileSelect={handleFileSelect} error={error} />
           </motion.div>
         )}
 
@@ -500,8 +364,54 @@ export default function Home() {
           </motion.div>
         )}
 
+        {/* CHECKOUT STATE */}
+        {appState === 'checkout' && previewUrl && (
+          <motion.div
+            key="checkout"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
+          >
+            {/* Floating Decorations */}
+            <FloatingDecorations />
+
+            {/* Logo */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mb-6"
+            >
+              <Image
+                src="/logo-full.png"
+                alt="LocoFace"
+                width={100}
+                height={100}
+                className="drop-shadow-lg"
+              />
+            </motion.div>
+
+            {/* Checkout Card */}
+            <CheckoutCard
+              previewUrl={previewUrl}
+              onPayWithCard={handlePurchase}
+              onPayForStarterPack={handleStarterPackPurchase}
+              onPromoCodeSubmit={handlePromoCode}
+              isProcessing={isBuying}
+            />
+
+            {/* Try another button */}
+            <button
+              onClick={handleReset}
+              className="mt-6 text-sm text-slate-500 hover:text-coral transition-colors"
+            >
+              &larr; Try with another photo
+            </button>
+          </motion.div>
+        )}
+
         {/* RESULTS STATE */}
-        {appState === 'results' && stickerUrl && (
+        {appState === 'results' && hdUrl && (
           <motion.div
             key="results"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -583,7 +493,7 @@ export default function Home() {
                       style={{ boxShadow: 'inset 0 0 20px rgba(168, 144, 196, 0.1)' }}
                     >
                       <img
-                        src={stickerUrl}
+                        src={hdUrl}
                         alt="Your sticker"
                         className="w-full h-full object-contain"
                       />
@@ -597,9 +507,9 @@ export default function Home() {
                     size="lg"
                     className="w-full mb-3"
                     onClick={() => {
-                      if (stickerUrl) {
+                      if (hdUrl) {
                         const link = document.createElement('a');
-                        link.href = stickerUrl;
+                        link.href = hdUrl;
                         link.download = 'locoface-sticker.png';
                         link.click();
                       }

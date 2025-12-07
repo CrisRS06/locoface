@@ -20,12 +20,33 @@ Style requirements:
 - Smooth, clean linework typical of Japanese kawaii style
 - Make it look like a high-quality die-cut vinyl sticker`;
 
+// Christmas-themed sticker prompt
+const CHRISTMAS_STICKER_PROMPT = `Transform this photo into a festive Christmas chibi kawaii sticker illustration.
+Style requirements:
+- Adorable chibi proportions with large head and small body
+- Big sparkling anime eyes with highlights
+- Add a cute Santa hat on the head
+- Include festive accessories (red scarf, mittens, or cozy Christmas sweater)
+- Soft holiday colors (reds, greens, golds) with bold black outlines
+- Add subtle sparkles or small snowflakes around the character
+- Vinyl sticker aesthetic with clean edges
+- Transparent background (remove all background completely)
+- Keep the person's recognizable features (hair, accessories)
+- Add extra rosy blush marks on cheeks for that winter glow
+- Smooth, clean linework typical of Japanese kawaii style
+- Make it look like a high-quality die-cut vinyl sticker with a festive Christmas vibe`;
+
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const imageFile = formData.get('image') as File | null;
+    const mode = formData.get('mode') as string | null;
+
+    // Determine if Christmas mode is enabled
+    const isChristmasMode = mode === 'christmas';
+    const selectedPrompt = isChristmasMode ? CHRISTMAS_STICKER_PROMPT : STICKER_PROMPT;
 
     if (!imageFile) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 });
@@ -45,7 +66,9 @@ export async function POST(req: Request) {
       .insert([
         {
           user_id: null,
-          prompt: 'Photo to chibi sticker (OpenAI)',
+          prompt: isChristmasMode
+            ? 'Photo to Christmas chibi sticker (OpenAI)'
+            : 'Photo to chibi sticker (OpenAI)',
           status: 'generating',
         },
       ])
@@ -71,13 +94,13 @@ export async function POST(req: Request) {
       type: 'image/png',
     });
 
-    console.log('Calling OpenAI gpt-image-1...');
+    console.log(`Calling OpenAI gpt-image-1... (Christmas mode: ${isChristmasMode})`);
 
     // 4. Call OpenAI gpt-image-1 images.edit API
     const response = await openai.images.edit({
       model: 'gpt-image-1',
       image: openaiImage,
-      prompt: STICKER_PROMPT,
+      prompt: selectedPrompt,
       size: '1024x1024',
       background: 'transparent',
     });

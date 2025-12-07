@@ -786,3 +786,238 @@ body {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
+
+/* ============================================
+   CHRISTMAS MODE THEME
+   ============================================ */
+
+:root {
+  /* Christmas Theme Colors */
+  --christmas-red: #D42426;
+  --christmas-red-dark: #B01E20;
+  --christmas-red-light: #E85456;
+  --christmas-green: #165B33;
+  --christmas-green-light: #1E7B46;
+  --christmas-green-dark: #0D3D22;
+  --christmas-gold: #FFD700;
+  --christmas-gold-dark: #DAA520;
+  --christmas-gold-light: #FFE44D;
+  --christmas-silver: #C0C0C0;
+  --christmas-white: #FFFAFA;
+  --christmas-cream: #FFF8F0;
+}
+
+/* Christmas mode body class overrides */
+body.christmas-mode {
+  --accent: var(--christmas-red);
+  --primary: var(--christmas-green);
+}
+
+/* Christmas gradient background */
+body.christmas-mode .gradient-bg-soft {
+  background: linear-gradient(180deg, #FFFBF5 0%, #FFF0F0 40%, #F0FFF4 70%, #FFFDE7 100%);
+}
+
+/* Tailwind Theme Extension for Christmas */
+@theme inline {
+  --color-christmas-red: var(--christmas-red);
+  --color-christmas-red-dark: var(--christmas-red-dark);
+  --color-christmas-red-light: var(--christmas-red-light);
+  --color-christmas-green: var(--christmas-green);
+  --color-christmas-green-light: var(--christmas-green-light);
+  --color-christmas-green-dark: var(--christmas-green-dark);
+  --color-christmas-gold: var(--christmas-gold);
+  --color-christmas-gold-dark: var(--christmas-gold-dark);
+  --color-christmas-gold-light: var(--christmas-gold-light);
+  --color-christmas-silver: var(--christmas-silver);
+  --color-christmas-white: var(--christmas-white);
+}
+
+/* Christmas Gradients */
+.gradient-christmas {
+  background: linear-gradient(135deg, var(--christmas-red) 0%, var(--christmas-green) 100%);
+}
+
+.gradient-christmas-gold {
+  background: linear-gradient(135deg, var(--christmas-gold) 0%, var(--christmas-gold-dark) 100%);
+}
+
+.gradient-christmas-festive {
+  background: linear-gradient(135deg, var(--christmas-red) 0%, var(--christmas-gold) 50%, var(--christmas-green) 100%);
+}
+
+/* Christmas gradient text */
+.gradient-text-christmas {
+  background: linear-gradient(135deg, #C41E3A 0%, #B8860B 50%, #228B22 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* ============================================
+   SNOWFALL ANIMATIONS
+   ============================================ */
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10vh) translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(20px);
+    opacity: 0.3;
+  }
+}
+
+@keyframes snowfall-sway {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(10px);
+  }
+  75% {
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes snowfall-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.snowflake {
+  position: fixed;
+  top: -20px;
+  pointer-events: none;
+  z-index: 100;
+  color: white;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  animation: snowfall linear infinite;
+}
+
+.snowflake::before {
+  content: '❄';
+  display: block;
+  animation: snowfall-sway 3s ease-in-out infinite, snowfall-rotate 8s linear infinite;
+}
+
+/* ============================================
+   CHRISTMAS LIGHTS ANIMATIONS
+   ============================================ */
+
+@keyframes christmas-light-blink {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+  }
+  50% {
+    opacity: 0.6;
+    filter: brightness(0.8) drop-shadow(0 0 3px currentColor);
+  }
+}
+
+@keyframes christmas-light-twinkle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.christmas-light {
+  animation: christmas-light-blink 1.5s ease-in-out infinite;
+}
+
+.christmas-light-red {
+  color: var(--christmas-red);
+  animation-delay: 0s;
+}
+
+.christmas-light-green {
+  color: var(--christmas-green-light);
+  animation-delay: 0.3s;
+}
+
+.christmas-light-gold {
+  color: var(--christmas-gold);
+  animation-delay: 0.6s;
+}
+
+.christmas-light-blue {
+  color: #4A90D9;
+  animation-delay: 0.9s;
+}
+
+/* ============================================
+   ORNAMENT ANIMATIONS
+   ============================================ */
+
+@keyframes ornament-swing {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes ornament-shine {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.ornament {
+  animation: ornament-swing 4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.ornament-shine {
+  animation: ornament-shine 2s ease-in-out infinite;
+}
+
+/* ============================================
+   SANTA HAT ANIMATION
+   ============================================ */
+
+@keyframes santa-hat-bounce {
+  0%, 100% {
+    transform: rotate(-5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-3deg) translateY(-2px);
+  }
+}
+
+.santa-hat {
+  animation: santa-hat-bounce 2s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* ============================================
+   CHRISTMAS SHADOWS
+   ============================================ */
+
+.shadow-christmas-red {
+  box-shadow: 0 10px 40px rgba(212, 36, 38, 0.3);
+}
+
+.shadow-christmas-green {
+  box-shadow: 0 10px 40px rgba(22, 91, 51, 0.3);
+}
+
+.shadow-christmas-gold {
+  box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);
+}

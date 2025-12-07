@@ -20,6 +20,9 @@ import { ShareButtons } from '@/components/ui/ShareButtons';
 import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
+import { useChristmas } from '@/contexts/ChristmasContext';
+import { FloatingChristmasDecorations, Ornament, HollyLeaf } from '@/components/ui/ChristmasDecorations';
+import { Snowfall } from '@/components/ui/Snowfall';
 
 // App States
 type AppState = 'hero' | 'processing' | 'checkout' | 'results';
@@ -36,6 +39,9 @@ export default function Home() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
+
+  // Christmas mode
+  const { isChristmas } = useChristmas();
 
   // LemonSqueezy checkout hook
   const { openCheckout } = useLemonSqueezy({
@@ -98,6 +104,10 @@ export default function Home() {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('userId', 'guest');
+      // Pass Christmas mode to API for festive sticker generation
+      if (isChristmas) {
+        formData.append('mode', 'christmas');
+      }
 
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -223,11 +233,36 @@ export default function Home() {
       {/* Confetti Celebration */}
       <Confetti trigger={showConfetti} />
 
-      {/* Background Blobs */}
+      {/* Snowfall for non-hero states when Christmas mode is ON */}
+      {isChristmas && appState !== 'hero' && <Snowfall />}
+
+      {/* Background Blobs - Christmas colors when enabled */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-lavender rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-soft-pink rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000" />
-        <div className="absolute bottom-40 left-20 w-80 h-80 bg-coral rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
+        <div
+          className={`absolute top-0 -left-40 w-96 h-96 rounded-full filter blur-3xl animate-blob transition-all duration-500 ${
+            isChristmas
+              ? 'bg-red-400 opacity-40'
+              : 'bg-lavender opacity-50 mix-blend-multiply'
+          }`}
+        />
+        <div
+          className={`absolute top-40 -right-40 w-96 h-96 rounded-full filter blur-3xl animate-blob animation-delay-2000 transition-all duration-500 ${
+            isChristmas
+              ? 'bg-green-500 opacity-35'
+              : 'bg-soft-pink opacity-50 mix-blend-multiply'
+          }`}
+        />
+        <div
+          className={`absolute bottom-40 left-20 w-96 h-96 rounded-full filter blur-3xl animate-blob animation-delay-4000 transition-all duration-500 ${
+            isChristmas
+              ? 'bg-yellow-400 opacity-30'
+              : 'bg-coral opacity-30 mix-blend-multiply'
+          }`}
+        />
+        {/* Extra Christmas blob */}
+        {isChristmas && (
+          <div className="absolute top-1/2 right-20 w-80 h-80 bg-red-300 opacity-25 rounded-full filter blur-3xl animate-blob" />
+        )}
       </div>
 
       {/* Footer Links - Fixed position, discrete */}
@@ -268,8 +303,8 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            {/* Floating Decorations */}
-            <FloatingDecorations />
+            {/* Floating Decorations - Switch between regular and Christmas */}
+            {isChristmas ? <FloatingChristmasDecorations /> : <FloatingDecorations />}
 
             {/* Logo */}
             <motion.div
@@ -288,34 +323,50 @@ export default function Home() {
 
             {/* Preview image with overlay and decorations */}
             <div className="relative">
-              {/* Corner decorations */}
+              {/* Corner decorations - Christmas themed when enabled */}
               <motion.div
                 className="absolute -top-4 -left-4 z-20"
                 animate={{ rotate: [0, 15, 0], scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <DoodleStar size={28} className="text-star-green" />
+                {isChristmas ? (
+                  <Ornament size={24} color="red" />
+                ) : (
+                  <DoodleStar size={28} className="text-star-green" />
+                )}
               </motion.div>
               <motion.div
                 className="absolute -top-3 -right-5 z-20"
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
               >
-                <DoodleHeart size={22} className="text-coral-light" filled />
+                {isChristmas ? (
+                  <Ornament size={20} color="gold" />
+                ) : (
+                  <DoodleHeart size={22} className="text-coral-light" filled />
+                )}
               </motion.div>
               <motion.div
                 className="absolute -bottom-4 -left-5 z-20"
                 animate={{ rotate: [0, -10, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
               >
-                <DoodleHeart size={20} className="text-heart-mint" />
+                {isChristmas ? (
+                  <HollyLeaf size={24} />
+                ) : (
+                  <DoodleHeart size={20} className="text-heart-mint" />
+                )}
               </motion.div>
               <motion.div
                 className="absolute -bottom-3 -right-4 z-20"
                 animate={{ rotate: [0, 20, 0], scale: [1, 1.15, 1] }}
                 transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
               >
-                <DoodleStar size={24} className="text-lavender-dark" />
+                {isChristmas ? (
+                  <Ornament size={22} color="green" />
+                ) : (
+                  <DoodleStar size={24} className="text-lavender-dark" />
+                )}
               </motion.div>
 
               <div className="w-72 h-72 sm:w-80 sm:h-80 mb-8">
@@ -373,8 +424,8 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            {/* Floating Decorations */}
-            <FloatingDecorations />
+            {/* Floating Decorations - Switch between regular and Christmas */}
+            {isChristmas ? <FloatingChristmasDecorations /> : <FloatingDecorations />}
 
             {/* Logo */}
             <motion.div
@@ -419,8 +470,8 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 z-10 relative"
           >
-            {/* Floating Decorations */}
-            <FloatingDecorations />
+            {/* Floating Decorations - Switch between regular and Christmas */}
+            {isChristmas ? <FloatingChristmasDecorations /> : <FloatingDecorations />}
 
             <div className="w-full max-w-md mx-auto">
               {/* Logo */}
@@ -452,34 +503,50 @@ export default function Home() {
 
               {/* Sticker Display with decorations */}
               <div className="relative mb-6">
-                {/* Corner decorations */}
+                {/* Corner decorations - Christmas themed when enabled */}
                 <motion.div
                   className="absolute -top-4 -left-4 z-20"
                   animate={{ rotate: [0, 15, 0], scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <DoodleStar size={28} className="text-star-green" />
+                  {isChristmas ? (
+                    <Ornament size={24} color="red" />
+                  ) : (
+                    <DoodleStar size={28} className="text-star-green" />
+                  )}
                 </motion.div>
                 <motion.div
                   className="absolute -top-3 -right-5 z-20"
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }}
                 >
-                  <DoodleHeart size={24} className="text-coral-light" filled />
+                  {isChristmas ? (
+                    <Ornament size={22} color="gold" />
+                  ) : (
+                    <DoodleHeart size={24} className="text-coral-light" filled />
+                  )}
                 </motion.div>
                 <motion.div
                   className="absolute -bottom-4 -left-5 z-20"
                   animate={{ rotate: [0, -15, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
                 >
-                  <DoodleHeart size={22} className="text-heart-mint" filled />
+                  {isChristmas ? (
+                    <HollyLeaf size={26} />
+                  ) : (
+                    <DoodleHeart size={22} className="text-heart-mint" filled />
+                  )}
                 </motion.div>
                 <motion.div
                   className="absolute -bottom-3 -right-4 z-20"
                   animate={{ rotate: [0, 20, 0], scale: [1, 1.15, 1] }}
                   transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
                 >
-                  <DoodleStar size={26} className="text-lavender-dark" />
+                  {isChristmas ? (
+                    <Ornament size={24} color="green" />
+                  ) : (
+                    <DoodleStar size={26} className="text-lavender-dark" />
+                  )}
                 </motion.div>
 
                 <GlassCard variant="elevated" padding="lg" className="border-2 border-white/50">

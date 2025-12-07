@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/Button';
 import { SocialProof } from '@/components/ui/SocialProof';
 import { HeroShowcase } from '@/components/ui/HeroShowcase';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
+import { useChristmas } from '@/contexts/ChristmasContext';
+import { ChristmasToggle } from '@/components/ui/ChristmasToggle';
+import { Snowfall } from '@/components/ui/Snowfall';
+import { FloatingChristmasDecorations, SantaHat, ChristmasLights } from '@/components/ui/ChristmasDecorations';
 
 interface HeroProps {
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -16,19 +20,63 @@ interface HeroProps {
 
 export function Hero({ onFileSelect, error }: HeroProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isChristmas } = useChristmas();
+
   return (
     <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-12 pb-20 overflow-hidden">
-      {/* Background Gradient Blobs - Updated colors */}
+      {/* Snowfall effect - Only when Christmas mode is ON */}
+      {isChristmas && <Snowfall />}
+
+      {/* Christmas Lights at the top */}
+      {isChristmas && (
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <ChristmasLights className="w-full" />
+        </div>
+      )}
+
+      {/* Background Gradient Blobs - Christmas colors when enabled */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-lavender rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob" />
-        <div className="absolute top-20 -right-40 w-80 h-80 bg-coral-light rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-mint-green rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
+        <div
+          className={`absolute top-0 -left-40 w-96 h-96 rounded-full filter blur-3xl animate-blob transition-all duration-500 ${
+            isChristmas
+              ? 'bg-red-400 opacity-40'
+              : 'bg-lavender opacity-60 mix-blend-multiply'
+          }`}
+        />
+        <div
+          className={`absolute top-20 -right-40 w-96 h-96 rounded-full filter blur-3xl animate-blob animation-delay-2000 transition-all duration-500 ${
+            isChristmas
+              ? 'bg-green-500 opacity-35'
+              : 'bg-coral-light opacity-40 mix-blend-multiply'
+          }`}
+        />
+        <div
+          className={`absolute bottom-20 left-20 w-96 h-96 rounded-full filter blur-3xl animate-blob animation-delay-4000 transition-all duration-500 ${
+            isChristmas
+              ? 'bg-yellow-400 opacity-30'
+              : 'bg-mint-green opacity-30 mix-blend-multiply'
+          }`}
+        />
+        {/* Extra Christmas blob */}
+        {isChristmas && (
+          <div className="absolute bottom-40 right-10 w-80 h-80 bg-red-300 opacity-25 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+        )}
       </div>
 
-      {/* Floating Doodle Decorations */}
-      <FloatingDecorations />
+      {/* Floating Decorations - Switch between regular and Christmas */}
+      {isChristmas ? <FloatingChristmasDecorations /> : <FloatingDecorations />}
 
       <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
+        {/* Christmas Toggle - Inside Hero, near the top */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="mb-4"
+        >
+          <ChristmasToggle />
+        </motion.div>
+
         {/* Logo */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -36,20 +84,39 @@ export function Hero({ onFileSelect, error }: HeroProps) {
           transition={{ type: 'spring', duration: 0.6 }}
           className="mb-6 relative"
         >
+          {/* Santa Hat on Logo - Only when Christmas mode is ON */}
+          {isChristmas && (
+            <motion.div
+              className="absolute -top-6 left-1/2 -translate-x-1/2 z-10"
+              initial={{ opacity: 0, y: -10, rotate: -15 }}
+              animate={{ opacity: 1, y: 0, rotate: -12 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+            >
+              <SantaHat size={60} />
+            </motion.div>
+          )}
+
           {/* Decorative elements around logo */}
           <motion.div
             className="absolute -top-2 -right-4"
             animate={{ rotate: [0, 10, 0], scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <DoodleStar size={20} className="text-star-green" />
+            <DoodleStar
+              size={20}
+              className={isChristmas ? 'text-christmas-gold' : 'text-star-green'}
+            />
           </motion.div>
           <motion.div
             className="absolute -bottom-1 -left-3"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
           >
-            <DoodleHeart size={16} className="text-heart-mint" filled />
+            <DoodleHeart
+              size={16}
+              className={isChristmas ? 'text-christmas-red' : 'text-heart-mint'}
+              filled
+            />
           </motion.div>
 
           {/* Logo image with text */}
@@ -73,15 +140,27 @@ export function Hero({ onFileSelect, error }: HeroProps) {
           <HeroShowcase />
         </motion.div>
 
-        {/* Headline - Gen Z style */}
+        {/* Headline - Gen Z style with Christmas variant */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
           className="heading-hero text-center text-balance mb-3"
         >
-          Turn Your Face Into{' '}
-          <span className="gradient-text">Cute Stickers</span>
+          {isChristmas ? (
+            <>
+              Turn Your Face Into{' '}
+              <span className="gradient-text-christmas">
+                Christmas Stickers
+              </span>{' '}
+              🎄
+            </>
+          ) : (
+            <>
+              Turn Your Face Into{' '}
+              <span className="gradient-text">Cute Stickers</span>
+            </>
+          )}
         </motion.h1>
 
         {/* Subheadline */}
@@ -91,7 +170,9 @@ export function Hero({ onFileSelect, error }: HeroProps) {
           transition={{ delay: 0.35, duration: 0.5 }}
           className="text-base sm:text-lg text-slate-600 text-center max-w-md mb-6"
         >
-          AI-powered chibi stickers in seconds. No account needed.
+          {isChristmas
+            ? 'Create festive chibi stickers with Santa hats! 🎅'
+            : 'AI-powered chibi stickers in seconds. No account needed.'}
         </motion.p>
 
         {/* Hidden file input */}

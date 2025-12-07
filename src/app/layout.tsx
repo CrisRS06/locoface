@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Outfit, Fredoka } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { ChristmasProvider } from "@/contexts/ChristmasContext";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -110,7 +111,9 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://app.lemonsqueezy.com" />
       </head>
       <body className={`${outfit.variable} ${fredoka.variable} font-sans antialiased`}>
-        {children}
+        <ChristmasProvider>
+          {children}
+        </ChristmasProvider>
 
         {/* LemonSqueezy Checkout.js for overlay payments */}
         <Script

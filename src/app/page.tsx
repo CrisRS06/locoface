@@ -7,6 +7,7 @@ import {
   Download,
   Sparkles,
   AlertCircle,
+  Share2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,7 +17,6 @@ import { Button } from '@/components/ui/Button';
 import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Confetti } from '@/components/ui/Confetti';
-import { ShareButtons } from '@/components/ui/ShareButtons';
 import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
@@ -226,6 +226,70 @@ export default function Home() {
     setShowConfetti(false);
     setAppState('hero');
     setProcessingStage('preparing');
+  };
+
+  // Download sticker with Web Share API for mobile
+  const handleDownload = async () => {
+    if (!hdUrl) return;
+
+    // For base64 data URLs, convert to blob
+    const isBase64 = hdUrl.startsWith('data:');
+
+    try {
+      // Try Web Share API first (works best on mobile)
+      if (navigator.share && 'canShare' in navigator) {
+        let file: File;
+
+        if (isBase64) {
+          // Convert base64 to blob
+          const response = await fetch(hdUrl);
+          const blob = await response.blob();
+          file = new File([blob], 'locoface-sticker.png', { type: 'image/png' });
+        } else {
+          const response = await fetch(hdUrl);
+          const blob = await response.blob();
+          file = new File([blob], 'locoface-sticker.png', { type: 'image/png' });
+        }
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'My LocoFace Sticker',
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      // User cancelled or share failed, fall through to download
+      console.log('Share cancelled or unavailable');
+    }
+
+    // Fallback: standard download
+    const link = document.createElement('a');
+    link.href = hdUrl;
+    link.download = 'locoface-sticker.png';
+    link.click();
+  };
+
+  // Share the app with friends
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'LocoFace - AI Sticker Maker',
+      text: 'Check out LocoFace! Turn your selfies into cute chibi stickers with AI',
+      url: 'https://locoface.com',
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled, copy link instead
+        await navigator.clipboard.writeText(shareData.url);
+      }
+    } else {
+      // Fallback: copy link
+      await navigator.clipboard.writeText(shareData.url);
+    }
   };
 
   return (
@@ -567,34 +631,29 @@ export default function Home() {
                     </div>
                   </motion.div>
 
-                  {/* Download Button */}
+                  {/* Download Button - Uses Web Share API on mobile */}
                   <Button
                     variant="coral"
                     glow
                     size="lg"
-                    className="w-full mb-3"
-                    onClick={() => {
-                      if (hdUrl) {
-                        const link = document.createElement('a');
-                        link.href = hdUrl;
-                        link.download = 'locoface-sticker.png';
-                        link.click();
-                      }
-                    }}
+                    className="w-full"
+                    onClick={handleDownload}
                   >
                     <Download className="w-5 h-5 mr-2" />
-                    Download Sticker
+                    Save Sticker
                   </Button>
 
-                  {/* Share Buttons */}
-                  <div className="pt-4 border-t border-slate-200/50">
-                    <ShareButtons
-                      url={typeof window !== 'undefined' ? window.location.href : ''}
-                      title="Check out my AI sticker!"
-                      text="I made this cute chibi sticker with Locoface!"
-                      variant="default"
-                    />
-                  </div>
+                  {/* Discrete share link */}
+                  <p className="text-sm text-slate-400 mt-4 text-center">
+                    Love it?{' '}
+                    <button
+                      onClick={handleShareApp}
+                      className="text-coral hover:text-coral-light underline underline-offset-2 transition-colors inline-flex items-center gap-1"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      Tell a friend!
+                    </button>
+                  </p>
                 </GlassCard>
               </div>
 

@@ -61,7 +61,7 @@ export function ChristmasToggle() {
           isChristmas ? 'text-white' : 'text-slate-700'
         }`}
       >
-        {isChristmas ? 'Christmas ON' : 'Christmas'}
+        {isChristmas ? 'Christmas ON' : 'Christmas OFF'}
       </span>
 
       {/* Toggle indicator */}

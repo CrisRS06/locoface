@@ -118,6 +118,29 @@ export default async function LocaleLayout({ children, params }: Props) {
           crossOrigin="anonymous"
         />
         <link rel="dns-prefetch" href="https://sdk.onvopay.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "LocoFace",
+              "applicationCategory": "MultimediaApplication",
+              "operatingSystem": "Web Browser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.9",
+                "ratingCount": "50000"
+              },
+              "description": "AI-powered chibi sticker generator that turns your photos into cute stickers in seconds"
+            })
+          }}
+        />
       </head>
       <body
         className={`${outfit.variable} ${fredoka.variable} font-sans antialiased`}

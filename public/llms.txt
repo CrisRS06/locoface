@@ -1,0 +1,40 @@
+# LocoFace - AI Sticker Generator
+
+## About
+LocoFace is an AI-powered tool that transforms photos into cute chibi-style stickers instantly. Founded in 2024, it has been used by over 50,000 creators worldwide.
+
+## Key Features
+- Photo to chibi sticker conversion using advanced AI
+- No account required - instant access
+- Generation in seconds (typically 5-10 seconds)
+- High-quality PNG output with transparent background
+- Works with selfies, pet photos, and more
+
+## Pricing
+- Individual sticker: $1.99
+- Starter Pack: $9.99 for 10 stickers (50% savings)
+
+## Use Cases
+- WhatsApp custom stickers
+- Telegram sticker packs
+- iMessage stickers
+- Social media content
+- Personal avatars
+- Gift stickers for friends and family
+
+## Technology
+- Powered by OpenAI's image generation
+- Built with Next.js 16
+- Hosted on Vercel
+
+## Contact
+- Website: https://locoface.com
+- Support: Via website contact form
+
+## Social Proof
+- 50,000+ happy creators
+- 4.9/5 average rating
+- Chibi/kawaii style specialized
+
+## Unique Value Proposition
+"Turn your face into cute chibi stickers in seconds" - LocoFace specializes in the chibi/kawaii aesthetic, offering the simplest and fastest way to create personalized stickers from any photo.

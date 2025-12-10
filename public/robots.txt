@@ -1,0 +1,29 @@
+# LocoFace - AI Sticker Generator
+# https://locoface.com
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Explicitly allow AI crawlers (for LLM citations)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Disallow API routes and admin
+Disallow: /api/
+Disallow: /admin
+
+# Sitemap
+Sitemap: https://locoface.com/sitemap.xml

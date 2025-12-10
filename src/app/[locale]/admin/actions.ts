@@ -98,13 +98,12 @@ export async function getExistingCodesAction(): Promise<{
     return { success: false, error: 'Unauthorized' };
   }
 
-  // Only fetch promotional codes (not paid pack codes)
+  // Only fetch promotional codes (not paid pack codes) - no limit
   const { data, error } = await supabaseAdmin
     .from('promo_codes')
     .select('id, code, max_uses, current_uses, is_active, created_at, printed_at')
     .is('pack_id', null)
-    .order('created_at', { ascending: false })
-    .limit(100);
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching codes:', error);

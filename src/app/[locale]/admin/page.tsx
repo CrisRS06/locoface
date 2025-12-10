@@ -471,7 +471,7 @@ export default function AdminPage() {
                 No codes yet. Generate some above!
               </p>
             ) : (
-              <div className="space-y-2 max-h-80 overflow-y-auto">
+              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                 {existingCodes.map((promo) => {
                   const isUsed = promo.current_uses >= promo.max_uses;
                   const isPrinted = !!promo.printed_at;

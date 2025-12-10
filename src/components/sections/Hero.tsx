@@ -26,7 +26,13 @@ export function Hero({ onFileSelect, error }: HeroProps) {
   const t = useTranslations('hero');
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-12 pb-20 overflow-hidden">
+    <section
+      className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 overflow-hidden"
+      style={{
+        paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))'
+      }}
+    >
       {/* Snowfall effect - Only when Christmas mode is ON */}
       {isChristmas && <Snowfall />}
 

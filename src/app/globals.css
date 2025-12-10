@@ -64,9 +64,11 @@
   --touch-min: 44px;
   --touch-comfortable: 48px;
 
-  /* Spacing */
+  /* Spacing - Safe Areas iOS */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 
   /* Animation Timing */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -147,6 +149,48 @@ body {
 
 .pt-safe {
   padding-top: max(1rem, var(--safe-top));
+}
+
+/* Safe area positioning utilities - iOS 2025 */
+.bottom-safe-4 {
+  bottom: calc(1rem + var(--safe-bottom));
+}
+
+.inset-safe {
+  top: var(--safe-top);
+  right: var(--safe-right);
+  bottom: var(--safe-bottom);
+  left: var(--safe-left);
+}
+
+.p-safe {
+  padding: calc(1rem + var(--safe-top)) calc(1rem + var(--safe-right)) calc(1rem + var(--safe-bottom)) calc(1rem + var(--safe-left));
+}
+
+/* iOS Input Optimization - Prevent auto-zoom */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
+  touch-action: manipulation;
+}
+
+/* Better touch behavior */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent overscroll bounce on iOS */
+html {
+  overscroll-behavior: none;
 }
 
 /* ============================================

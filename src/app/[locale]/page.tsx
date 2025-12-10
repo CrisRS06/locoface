@@ -504,8 +504,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* Footer Links - Fixed position, discrete */}
-      <div className="fixed bottom-4 left-4 flex items-center gap-3 text-xs text-slate-300 z-50">
+      {/* Footer Links - Fixed position, discrete - iOS safe area */}
+      <div className="fixed bottom-safe-4 left-4 flex items-center gap-3 text-xs text-slate-300 z-50">
         <Link href="/admin" className="hover:text-slate-500 transition-colors">
           Admin
         </Link>
@@ -697,7 +697,7 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
                   onClick={(e) => {
                     if (e.target === e.currentTarget) handleCancelPayment();
                   }}
@@ -771,7 +771,7 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
                 >
                   <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
@@ -806,7 +806,7 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
                 >
                   <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}

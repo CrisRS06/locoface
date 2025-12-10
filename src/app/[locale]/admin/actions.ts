@@ -98,9 +98,11 @@ export async function getExistingCodesAction(): Promise<{
     return { success: false, error: 'Unauthorized' };
   }
 
+  // Only fetch promotional codes (not paid pack codes)
   const { data, error } = await supabaseAdmin
     .from('promo_codes')
     .select('id, code, max_uses, current_uses, is_active, created_at, printed_at')
+    .is('pack_id', null)
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -122,10 +124,11 @@ export async function printCodesAction(
     return { success: false, error: 'Unauthorized' };
   }
 
-  // 1. Get existing available codes that haven't been printed
+  // 1. Get existing available promotional codes that haven't been printed (exclude paid pack codes)
   const { data: existingCodes, error: fetchError } = await supabaseAdmin
     .from('promo_codes')
     .select('id, code')
+    .is('pack_id', null)
     .is('printed_at', null)
     .eq('is_active', true)
     .lt('current_uses', 1) // current_uses < max_uses (max_uses is always 1)

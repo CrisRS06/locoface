@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Loader2, Copy, Check, LogOut, Sparkles, Gift, RefreshCw } from 'lucide-react';
+import { Lock, Loader2, Copy, Check, LogOut, Sparkles, Gift, RefreshCw, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { loginAction, logoutAction, generateCodesAction, getExistingCodesAction } from './actions';
@@ -113,6 +113,123 @@ export default function AdminPage() {
     if (result.success) {
       setExistingCodes(result.codes || []);
     }
+  };
+
+  const [isPrintingSheet, setIsPrintingSheet] = useState(false);
+
+  const printCodeSheet = async () => {
+    setIsPrintingSheet(true);
+
+    // Generar 30 códigos nuevos
+    const result = await generateCodesAction(30);
+
+    if (!result.success || !result.codes) {
+      setIsPrintingSheet(false);
+      return;
+    }
+
+    const newCodes = result.codes;
+
+    const COLS = 5;
+    const ROWS = 6;
+
+    // Generar HTML para cada tarjeta
+    const generateCard = (code: string) => `
+      <div style="
+        border: 1px dashed #ccc;
+        padding: 8px 4px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        box-sizing: border-box;
+      ">
+        <div style="
+          font-family: 'Courier New', monospace;
+          font-size: 11px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 4px;
+        ">${code}</div>
+        <div style="
+          font-size: 8px;
+          color: #666;
+          line-height: 1.2;
+        ">1 sticker gratis en<br/>locoface.com</div>
+      </div>
+    `;
+
+    // Generar la página con los 30 códigos
+    const cards = newCodes.map(code => generateCard(code)).join('');
+
+    const page = `
+      <div style="
+        display: grid;
+        grid-template-columns: repeat(${COLS}, 1fr);
+        grid-template-rows: repeat(${ROWS}, 1fr);
+        gap: 0;
+        width: 8.5in;
+        height: 11in;
+        padding: 0.25in;
+        box-sizing: border-box;
+      ">
+        ${cards}
+      </div>
+    `;
+
+    // Abrir ventana de impresión
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      setIsPrintingSheet(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>LocoFace - Códigos Promocionales</title>
+          <style>
+            @page {
+              size: letter;
+              margin: 0;
+            }
+            * {
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: Arial, sans-serif;
+            }
+            @media print {
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${page}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Esperar a que cargue y luego imprimir
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+
+    // Refrescar lista de códigos existentes
+    const codesResult = await getExistingCodesAction();
+    if (codesResult.success) {
+      setExistingCodes(codesResult.codes || []);
+    }
+
+    setIsPrintingSheet(false);
   };
 
   if (isLoading) {
@@ -328,6 +445,18 @@ export default function AdminPage() {
                   ({existingCodes.filter(c => c.current_uses < c.max_uses && c.is_active).length} available)
                 </span>
               </h2>
+              <button
+                onClick={printCodeSheet}
+                disabled={isPrintingSheet}
+                className="text-slate-400 hover:text-coral transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Generar 30 códigos e imprimir hoja"
+              >
+                {isPrintingSheet ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Printer className="w-4 h-4" />
+                )}
+              </button>
               <button
                 onClick={refreshCodes}
                 className="text-slate-400 hover:text-coral transition-colors p-2"

@@ -99,3 +99,41 @@ export function generatePromoCode(): string {
   }
   return code;
 }
+
+// Generate and insert a promo code with retry logic for duplicates
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function generateAndInsertPromoCode(
+  supabase: any,
+  packId?: string,
+  buyerEmail?: string
+): Promise<string | null> {
+  const maxAttempts = 3;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const code = generatePromoCode();
+
+    const { error } = await supabase
+      .from('promo_codes')
+      .insert({
+        code,
+        max_uses: 1,
+        current_uses: 0,
+        is_active: true,
+        pack_id: packId || null,
+        buyer_email: buyerEmail || null,
+      });
+
+    if (!error) return code;
+
+    // Error 23505 is UNIQUE constraint violation (duplicate)
+    if (error.code !== '23505') {
+      console.error('Error inserting promo code:', error);
+      return null;
+    }
+    // If duplicate, retry with a new code
+    console.log(`Promo code collision (attempt ${attempt + 1}), retrying...`);
+  }
+
+  console.error('Failed to generate unique promo code after max attempts');
+  return null;
+}

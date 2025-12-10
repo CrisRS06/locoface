@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { generatePromoCode, sendStarterPackCodes } from '@/lib/email';
+import { generateAndInsertPromoCode, sendStarterPackCodes } from '@/lib/email';
 import { z } from 'zod';
 
 // Zod schema for input validation
@@ -83,31 +83,25 @@ export async function POST(req: NextRequest) {
       }, { status: 202 });
     }
 
-    // 5. Payment succeeded - generate 10 promo codes
+    // 5. Payment succeeded - generate 10 promo codes with retry logic
     const buyerEmail = email || paymentIntent.customer?.email || '';
 
+    // Generate codes one by one with retry logic for duplicates
     const codes: string[] = [];
     for (let i = 0; i < 10; i++) {
-      codes.push(generatePromoCode());
+      const code = await generateAndInsertPromoCode(supabaseAdmin, pack.id, buyerEmail);
+      if (code) {
+        codes.push(code);
+      }
     }
 
-    // Insert promo codes into database
-    const promoCodesData = codes.map(code => ({
-      code,
-      max_uses: 1,
-      current_uses: 0,
-      is_active: true,
-      pack_id: pack.id,
-      buyer_email: buyerEmail,
-    }));
-
-    const { error: codesError } = await supabaseAdmin
-      .from('promo_codes')
-      .insert(promoCodesData);
-
-    if (codesError) {
-      console.error('Failed to insert promo codes:', codesError);
+    if (codes.length === 0) {
+      console.error('Failed to generate any promo codes for pack:', pack.id);
       return NextResponse.json({ error: 'Failed to create codes' }, { status: 500 });
+    }
+
+    if (codes.length < 10) {
+      console.warn(`Only generated ${codes.length}/10 codes for pack ${pack.id}`);
     }
 
     // Update credit_pack status
@@ -116,7 +110,7 @@ export async function POST(req: NextRequest) {
       .update({
         buyer_email: buyerEmail,
         status: 'paid',
-        codes_generated: 10,
+        codes_generated: codes.length,
         updated_at: new Date().toISOString(),
       })
       .eq('id', pack.id);
@@ -140,8 +134,8 @@ export async function POST(req: NextRequest) {
       success: true,
       status: 'paid',
       message: buyerEmail
-        ? `Your 10 promo codes have been sent to ${buyerEmail}!`
-        : 'Your 10 promo codes have been created! Check your email.',
+        ? `Your ${codes.length} promo codes have been sent to ${buyerEmail}!`
+        : `Your ${codes.length} promo codes have been created! Check your email.`,
       codes: buyerEmail ? undefined : codes,
     });
 

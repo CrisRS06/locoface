@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { generatePromoCode, sendStarterPackCodes } from '@/lib/email';
+import { generateAndInsertPromoCode, sendStarterPackCodes } from '@/lib/email';
 
 interface OnvoWebhookPayload {
   type: string;
@@ -59,29 +59,22 @@ export async function POST(req: Request) {
 
         const buyerEmail = customer?.email || '';
 
-        // Generate 10 unique promo codes
+        // Generate 10 unique promo codes with retry logic (inserts one by one)
         const codes: string[] = [];
         for (let i = 0; i < 10; i++) {
-          codes.push(generatePromoCode());
+          const code = await generateAndInsertPromoCode(supabaseAdmin, packId, buyerEmail);
+          if (code) {
+            codes.push(code);
+          }
         }
 
-        // Insert promo codes into database
-        const promoCodesData = codes.map(code => ({
-          code,
-          max_uses: 1,
-          current_uses: 0,
-          is_active: true,
-          pack_id: packId,
-          buyer_email: buyerEmail,
-        }));
-
-        const { error: codesError } = await supabaseAdmin
-          .from('promo_codes')
-          .insert(promoCodesData);
-
-        if (codesError) {
-          console.error('Failed to insert promo codes:', codesError);
+        if (codes.length === 0) {
+          console.error('Failed to generate any promo codes for pack:', packId);
           return NextResponse.json({ received: true, error: 'Failed to create codes' });
+        }
+
+        if (codes.length < 10) {
+          console.warn(`Only generated ${codes.length}/10 codes for pack ${packId}`);
         }
 
         // Update credit_pack status
@@ -91,7 +84,7 @@ export async function POST(req: Request) {
             buyer_email: buyerEmail,
             onvo_payment_intent_id: paymentIntentId,
             status: 'paid',
-            codes_generated: 10,
+            codes_generated: codes.length,
             updated_at: new Date().toISOString(),
           })
           .eq('id', packId);

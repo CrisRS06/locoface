@@ -88,6 +88,7 @@ export async function getExistingCodesAction(): Promise<{
     current_uses: number;
     is_active: boolean;
     created_at: string;
+    printed_at: string | null;
   }>;
   error?: string;
 }> {
@@ -99,7 +100,7 @@ export async function getExistingCodesAction(): Promise<{
 
   const { data, error } = await supabaseAdmin
     .from('promo_codes')
-    .select('id, code, max_uses, current_uses, is_active, created_at')
+    .select('id, code, max_uses, current_uses, is_active, created_at, printed_at')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -109,4 +110,78 @@ export async function getExistingCodesAction(): Promise<{
   }
 
   return { success: true, codes: data };
+}
+
+// Get codes for printing: use existing unprinted codes first, generate new ones if needed
+export async function printCodesAction(
+  quantity: number = 60
+): Promise<{ success: boolean; codes?: string[]; error?: string }> {
+  // Verify session first
+  const isAuthenticated = await verifySession();
+  if (!isAuthenticated) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  // 1. Get existing available codes that haven't been printed
+  const { data: existingCodes, error: fetchError } = await supabaseAdmin
+    .from('promo_codes')
+    .select('id, code')
+    .is('printed_at', null)
+    .eq('is_active', true)
+    .lt('current_uses', 1) // current_uses < max_uses (max_uses is always 1)
+    .limit(quantity);
+
+  if (fetchError) {
+    console.error('Error fetching existing codes:', fetchError);
+    return { success: false, error: 'Failed to fetch existing codes' };
+  }
+
+  const codesToPrint: { id: string; code: string }[] = existingCodes || [];
+  const codesNeeded = quantity - codesToPrint.length;
+
+  // 2. Generate new codes if needed
+  if (codesNeeded > 0) {
+    const maxAttempts = codesNeeded * 3;
+    let attempts = 0;
+
+    while (codesToPrint.length < quantity && attempts < maxAttempts) {
+      attempts++;
+      const code = generateCode();
+
+      const { data: newCode, error } = await supabaseAdmin
+        .from('promo_codes')
+        .insert({
+          code,
+          max_uses: 1,
+          current_uses: 0,
+          is_active: true,
+        })
+        .select('id, code')
+        .single();
+
+      if (!error && newCode) {
+        codesToPrint.push(newCode);
+      } else if (error && error.code !== '23505') {
+        console.error('Error inserting code:', error);
+      }
+    }
+  }
+
+  if (codesToPrint.length === 0) {
+    return { success: false, error: 'Failed to get codes for printing' };
+  }
+
+  // 3. Mark all codes as printed
+  const codeIds = codesToPrint.map(c => c.id);
+  const { error: updateError } = await supabaseAdmin
+    .from('promo_codes')
+    .update({ printed_at: new Date().toISOString() })
+    .in('id', codeIds);
+
+  if (updateError) {
+    console.error('Error marking codes as printed:', updateError);
+    // Continue anyway, codes are still valid
+  }
+
+  return { success: true, codes: codesToPrint.map(c => c.code) };
 }

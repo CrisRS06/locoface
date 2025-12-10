@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Loader2, Copy, Check, LogOut, Sparkles, Gift, RefreshCw, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { loginAction, logoutAction, generateCodesAction, getExistingCodesAction } from './actions';
+import { loginAction, logoutAction, generateCodesAction, getExistingCodesAction, printCodesAction } from './actions';
 import Link from 'next/link';
 
 interface PromoCode {
@@ -15,6 +15,7 @@ interface PromoCode {
   current_uses: number;
   is_active: boolean;
   created_at: string;
+  printed_at: string | null;
 }
 
 export default function AdminPage() {
@@ -120,24 +121,24 @@ export default function AdminPage() {
   const printCodeSheet = async () => {
     setIsPrintingSheet(true);
 
-    // Generar 30 códigos nuevos
-    const result = await generateCodesAction(30);
+    // Obtener 60 códigos (reutiliza existentes no impresos + genera nuevos si faltan)
+    const result = await printCodesAction(60);
 
     if (!result.success || !result.codes) {
       setIsPrintingSheet(false);
       return;
     }
 
-    const newCodes = result.codes;
+    const codes = result.codes;
 
-    const COLS = 5;
-    const ROWS = 6;
+    const COLS = 6;
+    const ROWS = 10;
 
-    // Generar HTML para cada tarjeta
+    // Generar HTML para cada tarjeta (diseño compacto)
     const generateCard = (code: string) => `
       <div style="
-        border: 1px dashed #ccc;
-        padding: 8px 4px;
+        border: 1px dashed #bbb;
+        padding: 2px 1px;
         text-align: center;
         display: flex;
         flex-direction: column;
@@ -148,21 +149,21 @@ export default function AdminPage() {
       ">
         <div style="
           font-family: 'Courier New', monospace;
-          font-size: 11px;
+          font-size: 9px;
           font-weight: bold;
           color: #333;
-          margin-bottom: 4px;
+          margin-bottom: 1px;
         ">${code}</div>
         <div style="
-          font-size: 8px;
-          color: #666;
-          line-height: 1.2;
+          font-size: 6px;
+          color: #555;
+          line-height: 1.1;
         ">1 sticker gratis en<br/>locoface.com</div>
       </div>
     `;
 
-    // Generar la página con los 30 códigos
-    const cards = newCodes.map(code => generateCard(code)).join('');
+    // Generar la página con los 60 códigos
+    const cards = codes.map(code => generateCard(code)).join('');
 
     const page = `
       <div style="
@@ -172,7 +173,7 @@ export default function AdminPage() {
         gap: 0;
         width: 8.5in;
         height: 11in;
-        padding: 0.25in;
+        padding: 0.1in;
         box-sizing: border-box;
       ">
         ${cards}
@@ -449,7 +450,7 @@ export default function AdminPage() {
                 onClick={printCodeSheet}
                 disabled={isPrintingSheet}
                 className="text-slate-400 hover:text-coral transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Generar 30 códigos e imprimir hoja"
+                title="Generar hoja de 60 códigos para imprimir"
               >
                 {isPrintingSheet ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -473,24 +474,33 @@ export default function AdminPage() {
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {existingCodes.map((promo) => {
                   const isUsed = promo.current_uses >= promo.max_uses;
+                  const isPrinted = !!promo.printed_at;
                   const isAvailable = !isUsed && promo.is_active;
 
                   return (
                     <div
                       key={promo.id}
                       className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                        isAvailable
+                        isUsed
+                          ? 'bg-slate-50 border-slate-100 opacity-60'
+                          : isPrinted
+                          ? 'bg-blue-50 border-blue-100'
+                          : isAvailable
                           ? 'bg-green-50 border-green-100'
                           : 'bg-slate-50 border-slate-100 opacity-60'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <code className="font-mono text-sm text-slate-800">{promo.code}</code>
-                        {isUsed && (
+                        {isUsed ? (
                           <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
                             Used
                           </span>
-                        )}
+                        ) : isPrinted ? (
+                          <span className="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full">
+                            Impreso
+                          </span>
+                        ) : null}
                       </div>
                       <span className="text-xs text-slate-500">
                         {promo.current_uses}/{promo.max_uses}

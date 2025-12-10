@@ -37,8 +37,6 @@ export async function POST(req: Request) {
     const payload: OnvoWebhookPayload = await req.json();
     const { type, data } = payload;
 
-    console.log(`Onvo webhook received: ${type}`, { paymentIntentId: data.id });
-
     // 2. Handle payment succeeded event
     if (type === 'payment-intent.succeeded') {
       const { metadata, id: paymentIntentId, customer } = data;
@@ -56,7 +54,6 @@ export async function POST(req: Request) {
           .single();
 
         if (existingPack?.status === 'paid') {
-          console.log('Starter pack already processed:', packId);
           return NextResponse.json({ received: true, message: 'Already processed' });
         }
 
@@ -71,7 +68,6 @@ export async function POST(req: Request) {
         // Insert promo codes into database
         const promoCodesData = codes.map(code => ({
           code,
-          discount_percent: 100, // Free sticker
           max_uses: 1,
           current_uses: 0,
           is_active: true,
@@ -85,7 +81,6 @@ export async function POST(req: Request) {
 
         if (codesError) {
           console.error('Failed to insert promo codes:', codesError);
-          // Return 200 anyway to prevent webhook retries
           return NextResponse.json({ received: true, error: 'Failed to create codes' });
         }
 
@@ -105,14 +100,11 @@ export async function POST(req: Request) {
         if (buyerEmail) {
           try {
             await sendStarterPackCodes({ to: buyerEmail, codes });
-            console.log('Starter pack codes sent to:', buyerEmail);
           } catch (emailError) {
-            console.error('Failed to send email:', emailError);
-            // Don't fail the webhook - codes are in DB
+            console.error('Failed to send starter pack email:', emailError);
           }
         }
 
-        console.log('Starter pack processed successfully:', packId);
         return NextResponse.json({ received: true, type: 'starter_pack' });
       }
 
@@ -126,7 +118,6 @@ export async function POST(req: Request) {
           .single();
 
         if (existingOrder?.status === 'paid') {
-          console.log('Order already processed:', orderId);
           return NextResponse.json({ received: true, message: 'Already processed' });
         }
 
@@ -155,8 +146,6 @@ export async function POST(req: Request) {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', orderId);
-
-            console.log('Order processed successfully:', orderId);
           }
         }
 
@@ -164,16 +153,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Handle payment failed event (for logging)
+    // 3. Handle payment failed event
     if (type === 'payment-intent.failed') {
-      const { metadata, id: paymentIntentId } = data;
-      console.error('Payment failed:', {
-        paymentIntentId,
-        metadata,
-        error: data,
-      });
+      const { metadata } = data;
 
-      // Optionally update order/pack status to failed
       if (metadata?.order_id) {
         await supabaseAdmin
           .from('orders')
@@ -193,7 +176,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    // Return 200 anyway to prevent infinite retries
     return NextResponse.json({ received: true, error: 'Internal error' });
   }
 }

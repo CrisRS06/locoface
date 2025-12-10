@@ -62,7 +62,6 @@ export async function POST(req: Request) {
     }
 
     const paymentIntent = await paymentIntentResponse.json();
-    console.log('Onvo PaymentIntent created:', paymentIntent.id);
 
     // 3. Update order with paymentIntentId
     const { error: updateError } = await supabaseAdmin
@@ -71,18 +70,8 @@ export async function POST(req: Request) {
       .eq('id', order.id);
 
     if (updateError) {
-      console.error('ERROR: Failed to update order with paymentIntentId:', updateError);
-    } else {
-      console.log('Order updated with paymentIntentId:', paymentIntent.id, 'for order:', order.id);
+      console.error('Failed to update order with paymentIntentId:', updateError);
     }
-
-    // Verify the update worked
-    const { data: verifyOrder } = await supabaseAdmin
-      .from('orders')
-      .select('id, onvo_payment_intent_id')
-      .eq('id', order.id)
-      .single();
-    console.log('Verify order after update:', verifyOrder);
 
     return NextResponse.json({
       success: true,

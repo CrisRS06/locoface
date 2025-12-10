@@ -8,6 +8,7 @@ import {
   Sparkles,
   AlertCircle,
   Share2,
+  Mail,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -42,10 +43,15 @@ export default function Home() {
   const [currentPaymentIntentId, setCurrentPaymentIntentId] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [isStarterPackPurchase, setIsStarterPackPurchase] = useState(false);
+  const [starterPackSuccess, setStarterPackSuccess] = useState<string | null>(null);
+  const [starterPackEmail, setStarterPackEmail] = useState('');
 
   // useRef to avoid stale closure issue with payment callbacks
   const paymentIntentIdRef = useRef<string | null>(null);
   const previewIdRef = useRef<string | undefined>(undefined);
+  const isStarterPackRef = useRef<boolean>(false);
+  const starterPackEmailRef = useRef<string>('');
 
   // Christmas mode
   const { isChristmas } = useChristmas();
@@ -57,8 +63,7 @@ export default function Home() {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`Confirming payment (attempt ${attempt}/${maxAttempts})...`);
-        const response = await fetch('/api/orders/confirm', {
+                const response = await fetch('/api/orders/confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId, previewId: previewIdToConfirm }),
@@ -85,50 +90,93 @@ export default function Home() {
     return null;
   };
 
+  // Confirm starter pack payment with polling
+  const confirmStarterPack = async (paymentIntentId: string, email: string) => {
+    const maxAttempts = 10;
+    const delayMs = 2000;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+                const response = await fetch('/api/packs/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId, email }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.status === 'paid') {
+          return result;
+        }
+
+        // Payment not ready yet, wait and retry
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      } catch (err) {
+        console.error('Confirm starter pack attempt failed:', err);
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    return null;
+  };
+
   // Onvo Pay checkout hook
   const { isReady: onvoReady, renderPaymentForm } = useOnvoPay({
-    onSuccess: async (data) => {
-      // Use refs to get current values (avoids stale closure)
+    onSuccess: async () => {
       const currentPreviewId = previewIdRef.current;
       const currentPaymentId = paymentIntentIdRef.current;
-
-      console.log('=== PAGE.TSX onSuccess CALLBACK FIRED ===');
-      console.log('Received data:', JSON.stringify(data, null, 2));
-      console.log('previewIdRef.current:', currentPreviewId);
-      console.log('paymentIntentIdRef.current:', currentPaymentId);
+      const isStarterPack = isStarterPackRef.current;
 
       setShowPaymentForm(false);
       setIsConfirmingPayment(true);
 
-      // Confirm payment with Onvo API and get HD image
-      if (currentPreviewId && currentPaymentId) {
-        console.log('Calling confirmPayment...');
+      // Handle Starter Pack purchase
+      if (isStarterPack && currentPaymentId) {
+        const email = starterPackEmailRef.current;
+
+        if (!email || !email.includes('@')) {
+          setError('Please enter a valid email to receive your codes');
+          setIsConfirmingPayment(false);
+          setIsBuying(false);
+          return;
+        }
+
+        const result = await confirmStarterPack(currentPaymentId, email);
+
+        if (result?.success) {
+          setStarterPackSuccess(`Your 10 promo codes have been sent to ${email}!`);
+          setShowConfetti(true);
+        } else {
+          setError('Payment confirmed but failed to process your pack. Please contact support.');
+        }
+      }
+      // Handle individual sticker purchase
+      else if (currentPreviewId && currentPaymentId) {
         const result = await confirmPayment(currentPaymentId, currentPreviewId);
-        console.log('confirmPayment result:', result);
 
         if (result?.hdUrl) {
-          console.log('SUCCESS! Got HD URL');
           setHdUrl(result.hdUrl);
           setShowConfetti(true);
           setAppState('results');
         } else {
-          console.log('FAILED - no hdUrl in result');
           setError('Payment confirmed but failed to get your sticker. Please contact support.');
         }
       } else {
-        console.log('SKIPPED confirmPayment - missing previewId or currentPaymentIntentId');
         setError('Payment state error. Please try again.');
       }
 
       setIsConfirmingPayment(false);
       setIsBuying(false);
       setCurrentPaymentIntentId(null);
+      setIsStarterPackPurchase(false);
       paymentIntentIdRef.current = null;
+      isStarterPackRef.current = false;
     },
     onError: (error) => {
-      console.log('=== PAGE.TSX onError CALLBACK FIRED ===');
-      console.log('Error:', error);
-
       console.error('Payment error:', error);
       setError('Payment failed. Please try again.');
       setIsBuying(false);
@@ -275,8 +323,13 @@ export default function Home() {
   const handleStarterPackPurchase = async () => {
     if (!onvoReady) return;
 
+    // Reset email for new purchase
+    setStarterPackEmail('');
+    starterPackEmailRef.current = '';
+
     setIsBuying(true);
     setError(null);
+    setStarterPackSuccess(null); // Reset any previous success message
 
     try {
       const response = await fetch('/api/checkout/starter', {
@@ -289,6 +342,8 @@ export default function Home() {
       if (data.paymentIntentId) {
         setCurrentPaymentIntentId(data.paymentIntentId);
         paymentIntentIdRef.current = data.paymentIntentId; // Also update ref for callback
+        setIsStarterPackPurchase(true);
+        isStarterPackRef.current = true; // Mark as starter pack for callback
         setShowPaymentForm(true);
         // Wait for the container to be rendered, then mount Onvo payment form
         setTimeout(() => {
@@ -357,7 +412,7 @@ export default function Home() {
       }
     } catch (err) {
       // User cancelled or share failed, fall through to download
-      console.log('Share cancelled or unavailable');
+      // Share cancelled or unavailable, fall through to download
     }
 
     // Fallback: standard download
@@ -642,6 +697,30 @@ export default function Home() {
                       </button>
                     </div>
 
+                    {/* Email field for Starter Pack only */}
+                    {isStarterPackPurchase && (
+                      <div className="px-4 pt-4 pb-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                          <Mail className="w-4 h-4 text-lavender" />
+                          Where should we send your codes?
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="your@email.com"
+                          value={starterPackEmail}
+                          onChange={(e) => {
+                            setStarterPackEmail(e.target.value);
+                            starterPackEmailRef.current = e.target.value;
+                          }}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-lavender focus:ring-2 focus:ring-lavender/20 outline-none text-sm"
+                          autoComplete="email"
+                        />
+                        <p className="text-xs text-slate-500 mt-1.5">
+                          We'll send your 10 promo codes to this email
+                        </p>
+                      </div>
+                    )}
+
                     {/* Onvo payment form container */}
                     <div className="p-4">
                       <div id="onvo-payment-container" className="min-h-[300px]" />
@@ -684,11 +763,48 @@ export default function Home() {
                       <Sparkles className="w-12 h-12 text-coral" />
                     </motion.div>
                     <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                      Confirming Payment...
+                      {isStarterPackPurchase ? 'Processing Starter Pack...' : 'Confirming Payment...'}
                     </h3>
                     <p className="text-sm text-slate-500">
-                      Please wait while we prepare your sticker
+                      {isStarterPackPurchase
+                        ? 'Generating your 10 promo codes'
+                        : 'Please wait while we prepare your sticker'}
                     </p>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Starter Pack Success Modal */}
+            <AnimatePresence>
+              {starterPackSuccess && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-sm w-full"
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">
+                      Starter Pack Activated!
+                    </h3>
+                    <p className="text-sm text-slate-600 mb-6">
+                      {starterPackSuccess}
+                    </p>
+                    <Button
+                      onClick={() => setStarterPackSuccess(null)}
+                      className="w-full"
+                    >
+                      Got it!
+                    </Button>
                   </motion.div>
                 </motion.div>
               )}

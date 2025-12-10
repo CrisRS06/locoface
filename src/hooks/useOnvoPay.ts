@@ -93,58 +93,25 @@ export function useOnvoPay({ onSuccess, onError }: UseOnvoPayOptions = {}) {
           paymentType: 'one_time',
           locale: 'en',
           onSuccess: (data) => {
-            // ========== DIAGNOSTIC LOGS ==========
-            console.log('=== ONVO SDK onSuccess FIRED ===');
-            console.log('Raw data type:', typeof data);
-            console.log('Raw data:', JSON.stringify(data, null, 2));
-
-            // Check all possible status locations
-            const dataAny = data as Record<string, unknown>;
-            console.log('data.status:', dataAny?.status);
-            console.log('data.paymentIntent:', dataAny?.paymentIntent);
-            console.log('data.paymentIntent?.status:', (dataAny?.paymentIntent as Record<string, unknown>)?.status);
-            console.log('Object.keys(data):', Object.keys(dataAny || {}));
-            // ======================================
-
             setIsLoading(false);
 
-            // Try multiple possible status locations
+            const dataAny = data as Record<string, unknown>;
             const status =
               dataAny?.status ||
               (dataAny?.paymentIntent as Record<string, unknown>)?.status ||
               (dataAny?.data as Record<string, unknown>)?.status;
 
-            console.log('Resolved status:', status);
-
-            // IMPORTANT: onSuccess fires when confirmation is processed
-            // Must check status to determine if payment actually succeeded
             if (status === 'succeeded') {
-              console.log('STATUS IS SUCCEEDED - calling page onSuccess');
               onSuccess?.({ status: 'succeeded', paymentIntent: dataAny?.paymentIntent } as OnvoPaymentResult);
             } else if (status === 'requires_payment_method') {
-              // Payment was declined
-              console.log('PAYMENT DECLINED - requires_payment_method');
               onError?.(new Error('Payment was declined. Please try another card.'));
             } else if (status === 'requires_action') {
-              // 3DS authentication needed - SDK handles this automatically
-              console.log('3DS authentication in progress...');
+              // 3DS authentication - SDK handles this automatically
             } else {
-              console.log('UNKNOWN STATUS:', status);
-              // If no status found, try calling onSuccess anyway to see what happens
               onSuccess?.({ status: status as string || 'unknown' } as OnvoPaymentResult);
             }
           },
           onError: (error) => {
-            // ========== DIAGNOSTIC LOGS ==========
-            console.log('=== ONVO SDK onError FIRED ===');
-            console.log('Error type:', typeof error);
-            console.log('Error:', JSON.stringify(error, null, 2));
-            // Show alert for visibility during debugging
-            if (typeof window !== 'undefined') {
-              alert('ONVO ERROR: ' + JSON.stringify(error));
-            }
-            // ======================================
-
             setIsLoading(false);
             console.error('Onvo payment error:', error);
             onError?.(error);

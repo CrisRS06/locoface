@@ -10,7 +10,7 @@ export async function POST() {
       .from('credit_packs')
       .insert([
         {
-          buyer_email: '', // Will be filled by webhook
+          buyer_email: '',
           pack_type: 'starter',
           total_codes: 10,
           codes_generated: 0,
@@ -59,10 +59,21 @@ export async function POST() {
 
     const paymentIntent = await paymentIntentResponse.json();
 
+    // 3. Update pack with paymentIntentId
+    const { error: updateError } = await supabaseAdmin
+      .from('credit_packs')
+      .update({ onvo_payment_intent_id: paymentIntent.id })
+      .eq('id', pack.id);
+
+    if (updateError) {
+      console.error('Failed to update pack with paymentIntentId:', updateError);
+    }
+
     return NextResponse.json({
       success: true,
       packId: pack.id,
       paymentIntentId: paymentIntent.id,
+      type: 'starter_pack',
     });
   } catch (error) {
     console.error('Starter pack checkout error:', error);

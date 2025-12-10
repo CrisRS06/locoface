@@ -149,15 +149,15 @@ export default function AdminPage() {
       ">
         <div style="
           font-family: 'Courier New', monospace;
-          font-size: 9px;
+          font-size: 12px;
           font-weight: bold;
           color: #333;
-          margin-bottom: 1px;
+          margin-bottom: 2px;
         ">${code}</div>
         <div style="
-          font-size: 6px;
+          font-size: 9px;
           color: #555;
-          line-height: 1.1;
+          line-height: 1.2;
         ">1 sticker gratis en<br/>locoface.com</div>
       </div>
     `;

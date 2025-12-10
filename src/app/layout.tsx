@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Fredoka } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { ChristmasProvider } from "@/contexts/ChristmasContext";
 
@@ -108,35 +107,17 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="dns-prefetch" href="https://app.lemonsqueezy.com" />
+        <link rel="dns-prefetch" href="https://sdk.onvopay.com" />
       </head>
       <body className={`${outfit.variable} ${fredoka.variable} font-sans antialiased`}>
         <ChristmasProvider>
           {children}
         </ChristmasProvider>
 
-        {/* LemonSqueezy Checkout.js for overlay payments */}
-        <Script
-          src="https://app.lemonsqueezy.com/js/lemon.js"
-          strategy="afterInteractive"
-        />
+        {/* Onvo Pay SDK is loaded dynamically by useOnvoPay hook */}
       </body>
     </html>
   );
 }
 
-// Type declaration for LemonSqueezy
-declare global {
-  interface Window {
-    createLemonSqueezy?: () => void;
-    LemonSqueezy?: {
-      Setup: (config: {
-        eventHandler: (event: { event: string; data?: unknown }) => void;
-      }) => void;
-      Url: {
-        Open: (url: string) => void;
-        Close: () => void;
-      };
-    };
-  }
-}
+// Type declaration for Onvo Pay is in src/hooks/useOnvoPay.ts

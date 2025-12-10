@@ -1,53 +1,96 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+const STICKER_PRICE_CENTS = 250; // $2.50
+
 export async function POST(req: Request) {
-    try {
-        const { previewId } = await req.json();
+  try {
+    const { previewId } = await req.json();
 
-        if (!previewId) {
-            return NextResponse.json({ error: 'Preview ID is required' }, { status: 400 });
-        }
-
-        // 1. Create pending order in Supabase
-        const { data: order, error: dbError } = await supabaseAdmin
-            .from('orders')
-            .insert([
-                {
-                    preview_id: previewId,
-                    status: 'pending',
-                    amount_cents: 199, // $1.99
-                },
-            ])
-            .select()
-            .single();
-
-        if (dbError) {
-            console.error('Supabase error:', dbError);
-            return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
-        }
-
-        // 2. Create Lemon Squeezy Checkout
-        // Note: In a real app, you'd use the Lemon Squeezy API to create a checkout session.
-        // For this MVP, we'll simulate a checkout URL or use a fixed product link with custom data.
-        // Using a fixed link with prefilled data is the easiest way for MVP.
-        // Format: https://store.lemonsqueezy.com/checkout/buy/variant_id?checkout[custom][order_id]=...
-
-        // You need to replace this with your actual Store ID and Variant ID
-        const STORE_DOMAIN = process.env.LEMONSQUEEZY_STORE_DOMAIN || 'your-store.lemonsqueezy.com';
-        const VARIANT_ID = process.env.LEMONSQUEEZY_VARIANT_ID || '123456';
-
-        // Add embed=1 for overlay checkout mode
-        const checkoutUrl = `https://${STORE_DOMAIN}/checkout/buy/${VARIANT_ID}?checkout[custom][order_id]=${order.id}&embed=1`;
-
-        return NextResponse.json({
-            success: true,
-            orderId: order.id,
-            checkoutUrl
-        });
-
-    } catch (error) {
-        console.error('Order creation error:', error);
-        return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    if (!previewId) {
+      return NextResponse.json({ error: 'Preview ID is required' }, { status: 400 });
     }
+
+    // 1. Create pending order in Supabase
+    const { data: order, error: dbError } = await supabaseAdmin
+      .from('orders')
+      .insert([
+        {
+          preview_id: previewId,
+          status: 'pending',
+          amount_cents: STICKER_PRICE_CENTS,
+        },
+      ])
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Supabase error:', dbError);
+      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    }
+
+    // 2. Create PaymentIntent in Onvo Pay
+    const ONVO_API_URL = process.env.ONVO_API_URL || 'https://api.onvopay.com/v1';
+    const ONVO_SECRET_KEY = process.env.ONVO_SECRET_KEY;
+
+    if (!ONVO_SECRET_KEY) {
+      console.error('ONVO_SECRET_KEY not configured');
+      return NextResponse.json({ error: 'Payment not configured' }, { status: 500 });
+    }
+
+    const paymentIntentResponse = await fetch(`${ONVO_API_URL}/payment-intents`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ONVO_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: STICKER_PRICE_CENTS,
+        currency: 'USD',
+        description: 'Locoface Sticker',
+        metadata: {
+          order_id: order.id,
+          type: 'individual',
+        },
+      }),
+    });
+
+    if (!paymentIntentResponse.ok) {
+      const errorData = await paymentIntentResponse.json();
+      console.error('Onvo PaymentIntent error:', errorData);
+      return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });
+    }
+
+    const paymentIntent = await paymentIntentResponse.json();
+    console.log('Onvo PaymentIntent created:', paymentIntent.id);
+
+    // 3. Update order with paymentIntentId
+    const { error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update({ onvo_payment_intent_id: paymentIntent.id })
+      .eq('id', order.id);
+
+    if (updateError) {
+      console.error('ERROR: Failed to update order with paymentIntentId:', updateError);
+    } else {
+      console.log('Order updated with paymentIntentId:', paymentIntent.id, 'for order:', order.id);
+    }
+
+    // Verify the update worked
+    const { data: verifyOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id, onvo_payment_intent_id')
+      .eq('id', order.id)
+      .single();
+    console.log('Verify order after update:', verifyOrder);
+
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+      paymentIntentId: paymentIntent.id,
+    });
+  } catch (error) {
+    console.error('Order creation error:', error);
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  }
 }

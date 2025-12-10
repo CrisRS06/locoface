@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RefreshCw,
@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Confetti } from '@/components/ui/Confetti';
 import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
-import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
+import { useOnvoPay } from '@/hooks/useOnvoPay';
 import { useChristmas } from '@/contexts/ChristmasContext';
 import { FloatingChristmasDecorations, Ornament, HollyLeaf } from '@/components/ui/ChristmasDecorations';
 import { Snowfall } from '@/components/ui/Snowfall';
@@ -39,32 +39,103 @@ export default function Home() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
+  const [currentPaymentIntentId, setCurrentPaymentIntentId] = useState<string | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+
+  // useRef to avoid stale closure issue with payment callbacks
+  const paymentIntentIdRef = useRef<string | null>(null);
+  const previewIdRef = useRef<string | undefined>(undefined);
 
   // Christmas mode
   const { isChristmas } = useChristmas();
 
-  // LemonSqueezy checkout hook
-  const { openCheckout } = useLemonSqueezy({
-    onSuccess: async (data) => {
-      console.log('Payment successful!', data);
-      setIsBuying(false);
-      // Fetch the HD version after successful payment
-      if (previewId) {
-        try {
-          const response = await fetch(`/api/orders/complete?previewId=${previewId}`);
-          const result = await response.json();
-          if (result.hdUrl) {
-            setHdUrl(result.hdUrl);
-            setShowConfetti(true);
-            setAppState('results');
-          }
-        } catch (err) {
-          console.error('Failed to get HD version:', err);
+  // Confirm payment with polling
+  const confirmPayment = async (paymentIntentId: string, previewIdToConfirm: string) => {
+    const maxAttempts = 10;
+    const delayMs = 2000;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`Confirming payment (attempt ${attempt}/${maxAttempts})...`);
+        const response = await fetch('/api/orders/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId, previewId: previewIdToConfirm }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.status === 'paid' && result.hdUrl) {
+          return result;
+        }
+
+        // Payment not ready yet, wait and retry
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      } catch (err) {
+        console.error('Confirm attempt failed:', err);
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
         }
       }
-    },
-    onClose: () => {
+    }
+
+    return null;
+  };
+
+  // Onvo Pay checkout hook
+  const { isReady: onvoReady, renderPaymentForm } = useOnvoPay({
+    onSuccess: async (data) => {
+      // Use refs to get current values (avoids stale closure)
+      const currentPreviewId = previewIdRef.current;
+      const currentPaymentId = paymentIntentIdRef.current;
+
+      console.log('=== PAGE.TSX onSuccess CALLBACK FIRED ===');
+      console.log('Received data:', JSON.stringify(data, null, 2));
+      console.log('previewIdRef.current:', currentPreviewId);
+      console.log('paymentIntentIdRef.current:', currentPaymentId);
+
+      setShowPaymentForm(false);
+      setIsConfirmingPayment(true);
+
+      // Confirm payment with Onvo API and get HD image
+      if (currentPreviewId && currentPaymentId) {
+        console.log('Calling confirmPayment...');
+        const result = await confirmPayment(currentPaymentId, currentPreviewId);
+        console.log('confirmPayment result:', result);
+
+        if (result?.hdUrl) {
+          console.log('SUCCESS! Got HD URL');
+          setHdUrl(result.hdUrl);
+          setShowConfetti(true);
+          setAppState('results');
+        } else {
+          console.log('FAILED - no hdUrl in result');
+          setError('Payment confirmed but failed to get your sticker. Please contact support.');
+        }
+      } else {
+        console.log('SKIPPED confirmPayment - missing previewId or currentPaymentIntentId');
+        setError('Payment state error. Please try again.');
+      }
+
+      setIsConfirmingPayment(false);
       setIsBuying(false);
+      setCurrentPaymentIntentId(null);
+      paymentIntentIdRef.current = null;
+    },
+    onError: (error) => {
+      console.log('=== PAGE.TSX onError CALLBACK FIRED ===');
+      console.log('Error:', error);
+
+      console.error('Payment error:', error);
+      setError('Payment failed. Please try again.');
+      setIsBuying(false);
+      setShowPaymentForm(false);
+      setCurrentPaymentIntentId(null);
+      paymentIntentIdRef.current = null;
+      setIsConfirmingPayment(false);
     },
   });
 
@@ -122,6 +193,7 @@ export default function Home() {
 
       setPreviewUrl(data.previewUrl); // Blurred version
       setPreviewId(data.previewId);
+      previewIdRef.current = data.previewId; // Also update ref for callback
 
       // Go to checkout instead of results
       setAppState('checkout');
@@ -140,9 +212,10 @@ export default function Home() {
 
   // Purchase handler
   const handlePurchase = async () => {
-    if (!previewId) return;
+    if (!previewId || !onvoReady) return;
 
     setIsBuying(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/orders/create', {
@@ -153,10 +226,16 @@ export default function Home() {
 
       const data = await response.json();
 
-      if (data.checkoutUrl) {
-        openCheckout(data.checkoutUrl);
+      if (data.paymentIntentId) {
+        setCurrentPaymentIntentId(data.paymentIntentId);
+        paymentIntentIdRef.current = data.paymentIntentId; // Also update ref for callback
+        setShowPaymentForm(true);
+        // Wait for the container to be rendered, then mount Onvo payment form
+        setTimeout(() => {
+          renderPaymentForm(data.paymentIntentId, '#onvo-payment-container');
+        }, 100);
       } else {
-        throw new Error('Failed to create checkout');
+        throw new Error('Failed to create payment intent');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -194,7 +273,10 @@ export default function Home() {
 
   // Starter Pack purchase handler
   const handleStarterPackPurchase = async () => {
+    if (!onvoReady) return;
+
     setIsBuying(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/checkout/starter', {
@@ -204,16 +286,30 @@ export default function Home() {
 
       const data = await response.json();
 
-      if (data.checkoutUrl) {
-        openCheckout(data.checkoutUrl);
+      if (data.paymentIntentId) {
+        setCurrentPaymentIntentId(data.paymentIntentId);
+        paymentIntentIdRef.current = data.paymentIntentId; // Also update ref for callback
+        setShowPaymentForm(true);
+        // Wait for the container to be rendered, then mount Onvo payment form
+        setTimeout(() => {
+          renderPaymentForm(data.paymentIntentId, '#onvo-payment-container');
+        }, 100);
       } else {
-        throw new Error('Failed to create checkout');
+        throw new Error('Failed to create payment intent');
       }
     } catch (err) {
       console.error('Starter pack checkout error:', err);
       setError('Failed to start checkout. Please try again.');
       setIsBuying(false);
     }
+  };
+
+  // Cancel payment form
+  const handleCancelPayment = () => {
+    setShowPaymentForm(false);
+    setCurrentPaymentIntentId(null);
+    paymentIntentIdRef.current = null;
+    setIsBuying(false);
   };
 
   // Reset to create another
@@ -514,6 +610,89 @@ export default function Home() {
               onPromoCodeSubmit={handlePromoCode}
               isProcessing={isBuying}
             />
+
+            {/* Onvo Pay Payment Modal */}
+            <AnimatePresence>
+              {showPaymentForm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) handleCancelPayment();
+                  }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-auto"
+                  >
+                    {/* Payment form header */}
+                    <div className="flex items-center justify-between p-4 border-b">
+                      <h3 className="text-lg font-semibold text-slate-800">Complete Payment</h3>
+                      <button
+                        onClick={handleCancelPayment}
+                        className="p-1 hover:bg-slate-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Onvo payment form container */}
+                    <div className="p-4">
+                      <div id="onvo-payment-container" className="min-h-[300px]" />
+                    </div>
+
+                    {/* Security badge */}
+                    <div className="p-4 border-t bg-slate-50 rounded-b-2xl">
+                      <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Secure payment powered by Onvo Pay</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Confirming Payment Modal */}
+            <AnimatePresence>
+              {isConfirmingPayment && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-sm w-full"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-12 h-12 mx-auto mb-4"
+                    >
+                      <Sparkles className="w-12 h-12 text-coral" />
+                    </motion.div>
+                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                      Confirming Payment...
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      Please wait while we prepare your sticker
+                    </p>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Try another button */}
             <button

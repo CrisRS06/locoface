@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { DoodleStar, DoodleHeart } from './Decorations';
+import { useChristmas } from '@/contexts/ChristmasContext';
 
 interface Example {
   before: string;
@@ -25,6 +26,7 @@ const SHOW_STICKER_TIME = 2000;  // Show sticker
 const FLIP_DURATION = 600;       // Flip animation
 
 export function HeroShowcase() {
+  const { isChristmas } = useChristmas();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,6 +62,11 @@ export function HeroShowcase() {
   }, [currentIndex]);
 
   const currentExample = EXAMPLES[currentIndex];
+
+  // Use Christmas version of stickers when Christmas mode is active
+  const afterImage = isChristmas
+    ? currentExample.after.replace('.png', 'c.png')
+    : currentExample.after;
 
   return (
     <div className="relative w-full max-w-[320px] sm:max-w-[380px] mx-auto">
@@ -140,7 +147,7 @@ export function HeroShowcase() {
                     className="absolute inset-0"
                   >
                     <Image
-                      src={currentExample.after}
+                      src={afterImage}
                       alt="Sticker result"
                       fill
                       className="object-contain p-4"

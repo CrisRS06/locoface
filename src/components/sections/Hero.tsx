@@ -4,12 +4,14 @@ import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Upload, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { SocialProof } from '@/components/ui/SocialProof';
 import { HeroShowcase } from '@/components/ui/HeroShowcase';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useChristmas } from '@/contexts/ChristmasContext';
 import { ChristmasToggle } from '@/components/ui/ChristmasToggle';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Snowfall } from '@/components/ui/Snowfall';
 import { FloatingChristmasDecorations, SantaHat, ChristmasLights } from '@/components/ui/ChristmasDecorations';
 
@@ -21,6 +23,7 @@ interface HeroProps {
 export function Hero({ onFileSelect, error }: HeroProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isChristmas } = useChristmas();
+  const t = useTranslations('hero');
 
   return (
     <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 pt-12 pb-20 overflow-hidden">
@@ -67,14 +70,15 @@ export function Hero({ onFileSelect, error }: HeroProps) {
       {isChristmas ? <FloatingChristmasDecorations /> : <FloatingDecorations />}
 
       <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
-        {/* Christmas Toggle - Inside Hero, near the top */}
+        {/* Controls - Christmas Toggle and Language Switcher */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.4 }}
-          className="mb-4"
+          className="mb-4 flex items-center gap-3"
         >
           <ChristmasToggle />
+          <LanguageSwitcher />
         </motion.div>
 
         {/* Logo */}
@@ -149,16 +153,16 @@ export function Hero({ onFileSelect, error }: HeroProps) {
         >
           {isChristmas ? (
             <>
-              Turn Your Face Into{' '}
+              {t('headline')}{' '}
               <span className="gradient-text-christmas">
-                Christmas Stickers
+                {t('headline_christmas')}
               </span>{' '}
               🎄
             </>
           ) : (
             <>
-              Turn Your Face Into{' '}
-              <span className="gradient-text">Cute Stickers</span>
+              {t('headline')}{' '}
+              <span className="gradient-text">{t('headline_highlight')}</span>
             </>
           )}
         </motion.h1>
@@ -171,8 +175,8 @@ export function Hero({ onFileSelect, error }: HeroProps) {
           className="text-base sm:text-lg text-slate-600 text-center max-w-md mb-6"
         >
           {isChristmas
-            ? 'Create festive chibi stickers with Santa hats! 🎅'
-            : 'AI-powered chibi stickers in seconds. No account needed.'}
+            ? t('subheadline_christmas')
+            : t('subheadline')}
         </motion.p>
 
         {/* Hidden file input */}
@@ -199,7 +203,7 @@ export function Hero({ onFileSelect, error }: HeroProps) {
             className="text-lg"
           >
             <Upload className="w-5 h-5 mr-2" />
-            Upload Your Photo
+            {t('cta')}
           </Button>
         </motion.div>
 

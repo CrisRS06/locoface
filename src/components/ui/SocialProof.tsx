@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface SocialProofProps {
@@ -19,6 +20,8 @@ export function SocialProof({
   variant = 'default',
   className,
 }: SocialProofProps) {
+  const t = useTranslations('social');
+
   const StarIcon = ({ filled }: { filled: boolean }) => (
     <Star
       className={cn(
@@ -43,7 +46,7 @@ export function SocialProof({
         </div>
         <span className="font-medium">{rating}</span>
         <span className="text-slate-400">•</span>
-        <span>{stickerCount} stickers created</span>
+        <span>{stickerCount} {t('stickers_created')}</span>
       </motion.div>
     );
   }
@@ -70,10 +73,10 @@ export function SocialProof({
           <span className="ml-2 text-2xl font-bold text-slate-800">{rating}</span>
         </div>
         <p className="text-slate-600 mb-1">
-          Rated by <span className="font-semibold">{reviewCount}</span> happy creators
+          {t('rating', { count: reviewCount })}
         </p>
         <p className="text-sm text-slate-500">
-          <span className="font-semibold text-coral">{stickerCount}</span> cute stickers made
+          <span className="font-semibold text-coral">{stickerCount}</span> {t('stickers_created')}
         </p>
       </motion.div>
     );
@@ -101,7 +104,7 @@ export function SocialProof({
         <span className="ml-2 font-semibold text-slate-800">{rating}</span>
       </div>
       <p className="text-sm text-slate-600">
-        Loved by <span className="font-semibold">{stickerCount}</span> happy creators
+        {t('loved_by', { count: stickerCount })}
       </p>
     </motion.div>
   );

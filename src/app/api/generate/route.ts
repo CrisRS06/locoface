@@ -38,6 +38,10 @@ Style requirements:
 
 export const maxDuration = 120;
 
+// Security: Allowed MIME types and max file size
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -50,6 +54,22 @@ export async function POST(req: Request) {
 
     if (!imageFile) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 });
+    }
+
+    // Security: Validate file MIME type
+    if (!ALLOWED_MIME_TYPES.includes(imageFile.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Please upload a JPEG, PNG, WebP, or GIF image.' },
+        { status: 400 }
+      );
+    }
+
+    // Security: Validate file size
+    if (imageFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 10MB.' },
+        { status: 413 }
+      );
     }
 
     if (!process.env.OPENAI_API_KEY) {

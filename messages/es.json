@@ -1,0 +1,135 @@
+{
+  "metadata": {
+    "title": "Locoface - Convierte Tu Foto en Stickers Lindos",
+    "description": "Transforma cualquier selfie en adorables stickers chibi kawaii con IA. Crea stickers unicos para WhatsApp, iMessage y mas en segundos!",
+    "keywords": "creador de stickers, stickers IA, stickers chibi, kawaii, foto a sticker, stickers WhatsApp, stickers personalizados"
+  },
+  "hero": {
+    "headline": "Convierte Tu Cara en",
+    "headline_highlight": "Stickers Lindos",
+    "headline_christmas": "Stickers Navidenos",
+    "subheadline": "Stickers chibi con IA en segundos. Sin cuenta necesaria.",
+    "subheadline_christmas": "Crea stickers festivos con gorros de Santa!",
+    "cta": "Sube Tu Foto"
+  },
+  "social": {
+    "rating": "Calificado por {count} creadores felices",
+    "stickers_made": "{count} stickers lindos creados",
+    "loved_by": "Amado por {count} creadores felices",
+    "stickers_created": "stickers creados",
+    "join_customers": "Unete a {count} clientes felices"
+  },
+  "processing": {
+    "preparing": "Preparando tu foto...",
+    "creating": "Creando tu sticker...",
+    "fun_messages": {
+      "1": "Cada sticker es 100% unico para ti!",
+      "2": "La magia de la IA esta sucediendo...",
+      "3": "Haciendote extra kawaii...",
+      "4": "Agregando brillos y ternura...",
+      "5": "Ya casi, mantente atento!",
+      "6": "El arte chibi se origino en Japon!",
+      "7": "Tu sticker se esta creando..."
+    }
+  },
+  "checkout": {
+    "unlock": "desbloquea tu sticker ahora!",
+    "benefits": {
+      "quality": {
+        "title": "Sticker de alta calidad",
+        "description": "Perfecto para todas las apps de mensajeria"
+      },
+      "lifetime": {
+        "title": "Acceso de por vida",
+        "description": "Usalo siempre, sin suscripcion"
+      },
+      "instant": {
+        "title": "Entrega instantanea",
+        "description": "Sin esperas - esta listo para ti!"
+      },
+      "sharing": {
+        "title": "Perfecto para compartir",
+        "description": "Un regalo magico para amigos y familia"
+      }
+    },
+    "offer_ends": "La oferta termina en",
+    "regular_price": "Precio regular",
+    "special_offer": "OFERTA ESPECIAL",
+    "off": "DESC",
+    "promo_placeholder": "Ingresa codigo promo...",
+    "promo_apply": "Aplicar",
+    "promo_error_empty": "Por favor ingresa un codigo promo",
+    "promo_error_invalid": "Codigo promo invalido o expirado",
+    "promo_error_failed": "Error al validar codigo. Intenta de nuevo.",
+    "buy_now": "Comprar Ahora",
+    "or_save": "o ahorra con un pack",
+    "best_value": "MEJOR VALOR",
+    "starter_pack": "Pack Inicial",
+    "stickers_anytime": "{count} stickers para usar cuando quieras",
+    "save_percent": "Ahorra {percent}% vs individual",
+    "codes_to_email": "Codigos enviados a tu email",
+    "get_starter_pack": "Obtener Pack Inicial",
+    "secure_payment": "Pago seguro con Onvo Pay"
+  },
+  "payment": {
+    "complete": "Completar Pago",
+    "email_label": "Donde enviamos tus codigos?",
+    "email_placeholder": "tu@email.com",
+    "email_helper": "Enviaremos tus 10 codigos promo a este email",
+    "confirming": "Confirmando Pago...",
+    "generating_codes": "Generando tus 10 codigos promo"
+  },
+  "results": {
+    "ready": "Tu sticker esta listo!",
+    "download": "Descargar Sticker HD",
+    "create_another": "Crear Otro Sticker",
+    "share": "Comparte con un amigo"
+  },
+  "download": {
+    "expired_title": "Enlace Expirado o Invalido",
+    "expired_message": "Este enlace de descarga ya no es valido. Los enlaces expiran despues de 24 horas por seguridad.",
+    "go_home": "Ir al Inicio",
+    "success": "Pago Exitoso!",
+    "download_button": "Descargar Sticker HD"
+  },
+  "errors": {
+    "upload_image": "Por favor sube un archivo de imagen",
+    "file_too_large": "La imagen debe ser menor a 10MB",
+    "invalid_email": "Por favor ingresa un email valido para recibir tus codigos",
+    "payment_failed": "El pago fallo. Por favor intenta de nuevo.",
+    "payment_state_error": "Error de estado de pago. Por favor intenta de nuevo.",
+    "pack_failed": "Pago confirmado pero fallo al procesar tu pack. Por favor contacta soporte.",
+    "sticker_failed": "Pago confirmado pero fallo al obtener tu sticker. Por favor contacta soporte.",
+    "generic": "Algo salio mal. Por favor intenta de nuevo."
+  },
+  "christmas": {
+    "toggle_on": "Navidad ON",
+    "toggle_off": "Navidad OFF"
+  },
+  "admin": {
+    "title": "Acceso Admin",
+    "password_placeholder": "Ingresa contrasena admin",
+    "login": "Iniciar Sesion",
+    "generate": "Generar Codigos Promo",
+    "quantity": "Cantidad",
+    "copy_all": "Copiar Todo",
+    "logout": "Cerrar Sesion",
+    "generated_codes": "Codigos Generados",
+    "error_password": "Contrasena invalida"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "back": "Atras",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver"
+  },
+  "footer": {
+    "terms": "Terminos de Servicio",
+    "privacy": "Politica de Privacidad"
+  }
+}

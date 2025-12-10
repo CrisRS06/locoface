@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const STARTER_PACK_PRICE_CENTS = 1299; // $12.99
+const STARTER_PACK_PRICE_CENTS = 999; // $9.99
 
 export async function POST() {
   try {

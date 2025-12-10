@@ -1,10 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useChristmas } from '@/contexts/ChristmasContext';
 
 export function ChristmasToggle() {
   const { isChristmas, toggleChristmas } = useChristmas();
+  const t = useTranslations('christmas');
 
   return (
     <motion.button
@@ -61,7 +63,7 @@ export function ChristmasToggle() {
           isChristmas ? 'text-white' : 'text-slate-700'
         }`}
       >
-        {isChristmas ? 'Christmas ON' : 'Christmas OFF'}
+        {isChristmas ? t('toggle_on') : t('toggle_off')}
       </span>
 
       {/* Toggle indicator */}

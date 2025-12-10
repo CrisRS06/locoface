@@ -1,0 +1,135 @@
+{
+  "metadata": {
+    "title": "Locoface - Turn Your Photo Into Cute Stickers",
+    "description": "Transform any selfie into adorable chibi kawaii stickers with AI. Create unique stickers for WhatsApp, iMessage, and more in seconds!",
+    "keywords": "sticker maker, AI stickers, chibi stickers, kawaii, photo to sticker, WhatsApp stickers, custom stickers"
+  },
+  "hero": {
+    "headline": "Turn Your Face Into",
+    "headline_highlight": "Cute Stickers",
+    "headline_christmas": "Christmas Stickers",
+    "subheadline": "AI-powered chibi stickers in seconds. No account needed.",
+    "subheadline_christmas": "Create festive chibi stickers with Santa hats!",
+    "cta": "Upload Your Photo"
+  },
+  "social": {
+    "rating": "Rated by {count} happy creators",
+    "stickers_made": "{count} cute stickers made",
+    "loved_by": "Loved by {count} happy creators",
+    "stickers_created": "stickers created",
+    "join_customers": "Join {count} happy customers"
+  },
+  "processing": {
+    "preparing": "Preparing your photo...",
+    "creating": "Creating your sticker...",
+    "fun_messages": {
+      "1": "Each sticker is 100% unique to you!",
+      "2": "AI magic is happening...",
+      "3": "Making you extra kawaii...",
+      "4": "Adding sparkles and cuteness...",
+      "5": "Almost there, stay tuned!",
+      "6": "Chibi art originated in Japan!",
+      "7": "Your sticker is being crafted..."
+    }
+  },
+  "checkout": {
+    "unlock": "unlock your sticker now!",
+    "benefits": {
+      "quality": {
+        "title": "High-quality sticker",
+        "description": "Perfect for all messaging apps"
+      },
+      "lifetime": {
+        "title": "Lifetime access",
+        "description": "Use forever, no subscription"
+      },
+      "instant": {
+        "title": "Instant delivery",
+        "description": "No waiting - it's ready for you!"
+      },
+      "sharing": {
+        "title": "Perfect for sharing",
+        "description": "A magical gift for friends & family"
+      }
+    },
+    "offer_ends": "Offer ends in",
+    "regular_price": "Regular price",
+    "special_offer": "SPECIAL OFFER",
+    "off": "OFF",
+    "promo_placeholder": "Enter promo code...",
+    "promo_apply": "Apply",
+    "promo_error_empty": "Please enter a promo code",
+    "promo_error_invalid": "Invalid or expired promo code",
+    "promo_error_failed": "Failed to validate code. Try again.",
+    "buy_now": "Buy Now",
+    "or_save": "or save with a pack",
+    "best_value": "BEST VALUE",
+    "starter_pack": "Starter Pack",
+    "stickers_anytime": "{count} stickers to use anytime",
+    "save_percent": "Save {percent}% vs individual",
+    "codes_to_email": "Codes delivered to your email",
+    "get_starter_pack": "Get Starter Pack",
+    "secure_payment": "Secure payment powered by Onvo Pay"
+  },
+  "payment": {
+    "complete": "Complete Payment",
+    "email_label": "Where should we send your codes?",
+    "email_placeholder": "your@email.com",
+    "email_helper": "We'll send your 10 promo codes to this email",
+    "confirming": "Confirming Payment...",
+    "generating_codes": "Generating your 10 promo codes"
+  },
+  "results": {
+    "ready": "Your sticker is ready!",
+    "download": "Download HD Sticker",
+    "create_another": "Create Another Sticker",
+    "share": "Tell a friend"
+  },
+  "download": {
+    "expired_title": "Link Expired or Invalid",
+    "expired_message": "This download link is no longer valid. Download links expire after 24 hours for security.",
+    "go_home": "Go Home",
+    "success": "Payment Successful!",
+    "download_button": "Download HD Sticker"
+  },
+  "errors": {
+    "upload_image": "Please upload an image file",
+    "file_too_large": "Image must be less than 10MB",
+    "invalid_email": "Please enter a valid email to receive your codes",
+    "payment_failed": "Payment failed. Please try again.",
+    "payment_state_error": "Payment state error. Please try again.",
+    "pack_failed": "Payment confirmed but failed to process your pack. Please contact support.",
+    "sticker_failed": "Payment confirmed but failed to get your sticker. Please contact support.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "christmas": {
+    "toggle_on": "Christmas ON",
+    "toggle_off": "Christmas OFF"
+  },
+  "admin": {
+    "title": "Admin Access",
+    "password_placeholder": "Enter admin password",
+    "login": "Login",
+    "generate": "Generate Promo Codes",
+    "quantity": "Quantity",
+    "copy_all": "Copy All",
+    "logout": "Logout",
+    "generated_codes": "Generated Codes",
+    "error_password": "Invalid password"
+  },
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View"
+  },
+  "footer": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  }
+}

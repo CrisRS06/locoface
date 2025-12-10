@@ -1,17 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { generatePromoCode, sendStarterPackCodes } from '@/lib/email';
+import { z } from 'zod';
+
+// Zod schema for input validation
+const PackConfirmSchema = z.object({
+  paymentIntentId: z.string()
+    .min(1, 'Payment Intent ID is required')
+    .max(200, 'Invalid Payment Intent ID'),
+  email: z.string()
+    .email('Invalid email format')
+    .max(255, 'Email too long')
+    .optional()
+    .nullable(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { paymentIntentId, email } = await req.json();
+    const body = await req.json();
 
-    if (!paymentIntentId) {
+    // Validate input with Zod
+    const validationResult = PackConfirmSchema.safeParse(body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Payment Intent ID is required' },
+        { error: validationResult.error.issues[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
+
+    const { paymentIntentId, email } = validationResult.data;
 
     // 1. Find the pack
     const { data: pack, error: packError } = await supabaseAdmin

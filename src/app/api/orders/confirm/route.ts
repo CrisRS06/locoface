@@ -13,10 +13,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Find the order
+    // 1. Find the order with all needed fields in one query (optimized)
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('id, status, preview_id, onvo_payment_intent_id')
+      .select('id, status, preview_id, onvo_payment_intent_id, hd_base64, download_token')
       .eq('preview_id', previewId)
       .eq('onvo_payment_intent_id', paymentIntentId)
       .single();
@@ -25,22 +25,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // 2. If already paid, return the HD image
-    if (order.status === 'paid') {
-      const { data: paidOrder } = await supabaseAdmin
-        .from('orders')
-        .select('hd_base64, download_token')
-        .eq('id', order.id)
-        .single();
-
-      if (paidOrder?.hd_base64) {
-        return NextResponse.json({
-          success: true,
-          status: 'paid',
-          hdUrl: paidOrder.hd_base64,
-          downloadToken: paidOrder.download_token,
-        });
-      }
+    // 2. If already paid, return the HD image immediately (no extra query)
+    if (order.status === 'paid' && order.hd_base64) {
+      return NextResponse.json({
+        success: true,
+        status: 'paid',
+        hdUrl: order.hd_base64,
+        downloadToken: order.download_token,
+      });
     }
 
     // 3. Verify payment status with Onvo API

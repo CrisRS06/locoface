@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const STICKER_PRICE_CENTS = 250; // $2.50
+const STICKER_PRICE_CENTS = 199; // $1.99
 
 export async function POST(req: Request) {
   try {

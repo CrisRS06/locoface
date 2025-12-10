@@ -1,19 +1,32 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
+import { z } from 'zod';
+
+// Zod schema for input validation
+const PromoValidateSchema = z.object({
+  code: z.string()
+    .min(1, 'Code is required')
+    .max(50, 'Code too long')
+    .transform(val => val.trim().toUpperCase()),
+  previewId: z.string()
+    .uuid('Invalid preview ID format'),
+});
 
 export async function POST(req: Request) {
   try {
-    const { code, previewId } = await req.json();
+    const body = await req.json();
 
-    if (!code || !previewId) {
+    // Validate input with Zod
+    const validationResult = PromoValidateSchema.safeParse(body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Code and previewId are required' },
+        { error: validationResult.error.issues[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
 
-    const normalizedCode = code.trim().toUpperCase();
+    const { code: normalizedCode, previewId } = validationResult.data;
 
     // 1. Check if promo code exists and is valid
     const { data: promoCode, error: promoError } = await supabaseAdmin

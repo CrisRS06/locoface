@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RefreshCw,
@@ -17,13 +18,36 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { Confetti } from '@/components/ui/Confetti';
 import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
 import { useOnvoPay } from '@/hooks/useOnvoPay';
 import { useChristmas } from '@/contexts/ChristmasContext';
-import { FloatingChristmasDecorations, Ornament, HollyLeaf } from '@/components/ui/ChristmasDecorations';
-import { Snowfall } from '@/components/ui/Snowfall';
+
+// Dynamic imports for heavy components (reduces initial bundle)
+const Confetti = dynamic(() => import('@/components/ui/Confetti').then(mod => mod.Confetti), {
+  ssr: false,
+  loading: () => null,
+});
+
+const Snowfall = dynamic(() => import('@/components/ui/Snowfall').then(mod => mod.Snowfall), {
+  ssr: false,
+  loading: () => null,
+});
+
+const FloatingChristmasDecorations = dynamic(
+  () => import('@/components/ui/ChristmasDecorations').then(mod => mod.FloatingChristmasDecorations),
+  { ssr: false, loading: () => null }
+);
+
+const Ornament = dynamic(
+  () => import('@/components/ui/ChristmasDecorations').then(mod => mod.Ornament),
+  { ssr: false, loading: () => null }
+);
+
+const HollyLeaf = dynamic(
+  () => import('@/components/ui/ChristmasDecorations').then(mod => mod.HollyLeaf),
+  { ssr: false, loading: () => null }
+);
 
 // App States
 type AppState = 'hero' | 'processing' | 'checkout' | 'results';

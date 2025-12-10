@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface ProgressIndicatorProps {
@@ -10,19 +11,20 @@ interface ProgressIndicatorProps {
   className?: string;
 }
 
-const FUN_MESSAGES = [
-  'Each sticker is 100% unique to you!',
-  'AI magic is happening...',
-  'Making you extra kawaii...',
-  'Adding sparkles and cuteness...',
-  'Almost there, stay tuned!',
-  'Chibi art originated in Japan!',
-  'Your sticker is being crafted...',
-];
-
 export function ProgressIndicator({ currentStage, className }: ProgressIndicatorProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
+  const t = useTranslations('processing');
+
+  const funMessages = [
+    t('fun_messages.1'),
+    t('fun_messages.2'),
+    t('fun_messages.3'),
+    t('fun_messages.4'),
+    t('fun_messages.5'),
+    t('fun_messages.6'),
+    t('fun_messages.7'),
+  ];
 
   // Timer for elapsed seconds
   useEffect(() => {
@@ -36,15 +38,15 @@ export function ProgressIndicator({ currentStage, className }: ProgressIndicator
   // Rotate messages every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % FUN_MESSAGES.length);
+      setMessageIndex((prev) => (prev + 1) % funMessages.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [funMessages.length]);
 
   const stageLabel = currentStage === 'preparing'
-    ? 'Preparing your photo...'
-    : 'Creating your sticker...';
+    ? t('preparing')
+    : t('creating');
 
   return (
     <div className={cn('w-full max-w-sm mx-auto', className)}>
@@ -125,7 +127,7 @@ export function ProgressIndicator({ currentStage, className }: ProgressIndicator
           transition={{ duration: 0.3 }}
           className="text-center text-sm text-slate-500"
         >
-          {FUN_MESSAGES[messageIndex]}
+          {funMessages[messageIndex]}
         </motion.p>
       </AnimatePresence>
     </div>

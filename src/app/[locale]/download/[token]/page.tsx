@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Download, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+// Meta Pixel type declaration
+declare global {
+  interface Window {
+    fbq?: (action: string, event: string, params?: object) => void;
+  }
+}
+
 export default function DownloadPage() {
     const params = useParams();
     const token = params.token as string;
@@ -35,6 +42,16 @@ export default function DownloadPage() {
 
             setHdUrl(order.hd_base64);
             setStatus('valid');
+
+            // Meta Pixel - Track Purchase event
+            if (typeof window !== 'undefined' && window.fbq) {
+                window.fbq('track', 'Purchase', {
+                    value: 2.50,
+                    currency: 'USD',
+                    content_type: 'product',
+                    content_name: 'HD Sticker'
+                });
+            }
         };
 
         verifyToken();

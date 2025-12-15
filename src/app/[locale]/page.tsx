@@ -1,8 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Meta Pixel type declaration
+declare global {
+  interface Window {
+    fbq?: (action: string, event: string, params?: object) => void;
+  }
+}
 import {
   RefreshCw,
   Download,
@@ -172,6 +179,16 @@ export default function Home() {
         const result = await confirmStarterPack(currentPaymentId, email);
 
         if (result?.success) {
+          // Meta Pixel - Track Purchase for Starter Pack
+          if (typeof window !== 'undefined' && window.fbq) {
+            window.fbq('track', 'Purchase', {
+              value: 9.99,
+              currency: 'USD',
+              content_type: 'product',
+              content_name: 'Starter Pack - 10 Stickers',
+              num_items: 10,
+            });
+          }
           setStarterPackSuccess(`Your 10 promo codes have been sent to ${email}!`);
           setShowConfetti(true);
         } else {
@@ -183,6 +200,16 @@ export default function Home() {
         const result = await confirmPayment(currentPaymentId, currentPreviewId);
 
         if (result?.hdUrl) {
+          // Meta Pixel - Track Purchase for individual sticker
+          if (typeof window !== 'undefined' && window.fbq) {
+            window.fbq('track', 'Purchase', {
+              value: 1.99,
+              currency: 'USD',
+              content_type: 'product',
+              content_name: 'HD Sticker',
+              num_items: 1,
+            });
+          }
           setHdUrl(result.hdUrl);
           setShowConfetti(true);
           setAppState('results');
@@ -267,6 +294,17 @@ export default function Home() {
       setPreviewId(data.previewId);
       previewIdRef.current = data.previewId; // Also update ref for callback
 
+      // Meta Pixel - Track ViewContent when sticker is generated
+      if (typeof window !== 'undefined' && window.fbq) {
+        window.fbq('track', 'ViewContent', {
+          content_type: 'product',
+          content_name: 'AI Sticker Preview',
+          content_category: 'Sticker',
+          currency: 'USD',
+          value: 1.99,
+        });
+      }
+
       // Go to checkout instead of results
       setAppState('checkout');
     } catch (err: unknown) {
@@ -285,6 +323,17 @@ export default function Home() {
   // Purchase handler
   const handlePurchase = async () => {
     if (!previewId || !onvoReady) return;
+
+    // Meta Pixel - Track InitiateCheckout
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        content_name: 'HD Sticker',
+        currency: 'USD',
+        value: 1.99,
+        num_items: 1,
+      });
+    }
 
     setIsBuying(true);
     setError(null);
@@ -346,6 +395,17 @@ export default function Home() {
   // Starter Pack purchase handler
   const handleStarterPackPurchase = async () => {
     if (!onvoReady) return;
+
+    // Meta Pixel - Track InitiateCheckout for Starter Pack
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        content_name: 'Starter Pack - 10 Stickers',
+        currency: 'USD',
+        value: 9.99,
+        num_items: 10,
+      });
+    }
 
     // Reset email for new purchase
     setStarterPackEmail('');

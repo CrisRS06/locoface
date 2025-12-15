@@ -123,6 +123,7 @@ export async function POST(req: Request) {
       prompt: selectedPrompt,
       size: '1024x1024',
       background: 'transparent',
+      quality: 'medium', // Faster generation (~40% faster) and lower cost (~76% cheaper)
     });
 
     // 5. Extract base64 image from response

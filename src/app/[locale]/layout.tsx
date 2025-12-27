@@ -117,7 +117,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="dns-prefetch" href="https://sdk.onvopay.com" />
+        <link rel="dns-prefetch" href="https://app.lemonsqueezy.com" />
         {/* Meta Pixel Code */}
         <script
           dangerouslySetInnerHTML={{

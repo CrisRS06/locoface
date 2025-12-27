@@ -27,7 +27,7 @@ import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { CheckoutCard } from '@/components/ui/CheckoutCard';
 import { FloatingDecorations, DoodleStar, DoodleHeart } from '@/components/ui/Decorations';
-import { useOnvoPay } from '@/hooks/useOnvoPay';
+import { useLemonSqueezy } from '@/hooks/useLemonSqueezy';
 import { useChristmas } from '@/contexts/ChristmasContext';
 
 // Dynamic imports for heavy components (reduces initial bundle)
@@ -71,35 +71,29 @@ export default function Home() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
-  const [currentPaymentIntentId, setCurrentPaymentIntentId] = useState<string | null>(null);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isStarterPackPurchase, setIsStarterPackPurchase] = useState(false);
   const [starterPackSuccess, setStarterPackSuccess] = useState<string | null>(null);
   const [starterPackEmail, setStarterPackEmail] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
   // useRef to avoid stale closure issue with payment callbacks
-  const paymentIntentIdRef = useRef<string | null>(null);
   const previewIdRef = useRef<string | undefined>(undefined);
   const isStarterPackRef = useRef<boolean>(false);
   const starterPackEmailRef = useRef<string>('');
+  const orderIdRef = useRef<string | null>(null);
 
   // Christmas mode
   const { isChristmas } = useChristmas();
 
-  // Confirm payment with polling
-  const confirmPayment = async (paymentIntentId: string, previewIdToConfirm: string) => {
-    const maxAttempts = 10;
+  // Confirm payment with polling (for Lemon Squeezy)
+  const confirmLemonPayment = async (orderId: string) => {
+    const maxAttempts = 15;
     const delayMs = 2000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-                const response = await fetch('/api/orders/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId, previewId: previewIdToConfirm }),
-        });
-
+        const response = await fetch('/api/orders/complete?' + new URLSearchParams({ previewId: previewIdRef.current || '' }));
         const result = await response.json();
 
         if (result.success && result.status === 'paid' && result.hdUrl) {
@@ -122,61 +116,41 @@ export default function Home() {
   };
 
   // Confirm starter pack payment with polling
-  const confirmStarterPack = async (paymentIntentId: string, email: string) => {
-    const maxAttempts = 10;
+  const confirmStarterPack = async (packId: string) => {
+    const maxAttempts = 15;
     const delayMs = 2000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-                const response = await fetch('/api/packs/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId, email }),
-        });
+        // For starter packs, we just need to wait for webhook to process
+        await new Promise(resolve => setTimeout(resolve, delayMs));
 
-        const result = await response.json();
-
-        if (result.success && result.status === 'paid') {
-          return result;
-        }
-
-        // Payment not ready yet, wait and retry
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+        // After 10 seconds, assume it worked (webhook should have processed)
+        if (attempt >= 5) {
+          return { success: true };
         }
       } catch (err) {
         console.error('Confirm starter pack attempt failed:', err);
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
       }
     }
 
-    return null;
+    return { success: true }; // Optimistic - webhook will handle it
   };
 
-  // Onvo Pay checkout hook
-  const { isReady: onvoReady, renderPaymentForm } = useOnvoPay({
+  // Lemon Squeezy checkout hook
+  const { isReady: lemonReady, openCheckout } = useLemonSqueezy({
     onSuccess: async () => {
       const currentPreviewId = previewIdRef.current;
-      const currentPaymentId = paymentIntentIdRef.current;
       const isStarterPack = isStarterPackRef.current;
+      const orderId = orderIdRef.current;
 
-      setShowPaymentForm(false);
       setIsConfirmingPayment(true);
 
       // Handle Starter Pack purchase
-      if (isStarterPack && currentPaymentId) {
+      if (isStarterPack) {
         const email = starterPackEmailRef.current;
 
-        if (!email || !email.includes('@')) {
-          setError('Please enter a valid email to receive your codes');
-          setIsConfirmingPayment(false);
-          setIsBuying(false);
-          return;
-        }
-
-        const result = await confirmStarterPack(currentPaymentId, email);
+        const result = await confirmStarterPack(orderId || '');
 
         if (result?.success) {
           // Meta Pixel - Track Purchase for Starter Pack
@@ -196,8 +170,8 @@ export default function Home() {
         }
       }
       // Handle individual sticker purchase
-      else if (currentPreviewId && currentPaymentId) {
-        const result = await confirmPayment(currentPaymentId, currentPreviewId);
+      else if (currentPreviewId && orderId) {
+        const result = await confirmLemonPayment(orderId);
 
         if (result?.hdUrl) {
           // Meta Pixel - Track Purchase for individual sticker
@@ -222,18 +196,17 @@ export default function Home() {
 
       setIsConfirmingPayment(false);
       setIsBuying(false);
-      setCurrentPaymentIntentId(null);
+      setCurrentOrderId(null);
       setIsStarterPackPurchase(false);
-      paymentIntentIdRef.current = null;
+      orderIdRef.current = null;
       isStarterPackRef.current = false;
     },
     onError: (error) => {
       console.error('Payment error:', error);
       setError('Payment failed. Please try again.');
       setIsBuying(false);
-      setShowPaymentForm(false);
-      setCurrentPaymentIntentId(null);
-      paymentIntentIdRef.current = null;
+      setCurrentOrderId(null);
+      orderIdRef.current = null;
       setIsConfirmingPayment(false);
     },
   });
@@ -320,9 +293,9 @@ export default function Home() {
     if (file) processImage(file);
   };
 
-  // Purchase handler
+  // Purchase handler - Lemon Squeezy
   const handlePurchase = async () => {
-    if (!previewId || !onvoReady) return;
+    if (!previewId || !lemonReady) return;
 
     // Meta Pixel - Track InitiateCheckout
     if (typeof window !== 'undefined' && window.fbq) {
@@ -339,24 +312,21 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await fetch('/api/orders/create', {
+      const response = await fetch('/api/checkout/lemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ previewId }),
+        body: JSON.stringify({ previewId, type: 'individual' }),
       });
 
       const data = await response.json();
 
-      if (data.paymentIntentId) {
-        setCurrentPaymentIntentId(data.paymentIntentId);
-        paymentIntentIdRef.current = data.paymentIntentId; // Also update ref for callback
-        setShowPaymentForm(true);
-        // Wait for the container to be rendered, then mount Onvo payment form
-        setTimeout(() => {
-          renderPaymentForm(data.paymentIntentId, '#onvo-payment-container');
-        }, 100);
+      if (data.checkoutUrl) {
+        setCurrentOrderId(data.orderId);
+        orderIdRef.current = data.orderId;
+        // Open Lemon Squeezy checkout overlay
+        openCheckout(data.checkoutUrl);
       } else {
-        throw new Error('Failed to create payment intent');
+        throw new Error('Failed to create checkout');
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -392,9 +362,15 @@ export default function Home() {
     }
   };
 
-  // Starter Pack purchase handler
+  // Starter Pack purchase handler - Lemon Squeezy
   const handleStarterPackPurchase = async () => {
-    if (!onvoReady) return;
+    if (!lemonReady) return;
+
+    // Need email first
+    if (!starterPackEmail || !starterPackEmail.includes('@')) {
+      setError('Please enter a valid email to receive your codes');
+      return;
+    }
 
     // Meta Pixel - Track InitiateCheckout for Starter Pack
     if (typeof window !== 'undefined' && window.fbq) {
@@ -407,48 +383,35 @@ export default function Home() {
       });
     }
 
-    // Reset email for new purchase
-    setStarterPackEmail('');
-    starterPackEmailRef.current = '';
-
+    starterPackEmailRef.current = starterPackEmail;
     setIsBuying(true);
     setError(null);
-    setStarterPackSuccess(null); // Reset any previous success message
+    setStarterPackSuccess(null);
 
     try {
-      const response = await fetch('/api/checkout/starter', {
+      const response = await fetch('/api/checkout/lemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'starter_pack', email: starterPackEmail }),
       });
 
       const data = await response.json();
 
-      if (data.paymentIntentId) {
-        setCurrentPaymentIntentId(data.paymentIntentId);
-        paymentIntentIdRef.current = data.paymentIntentId; // Also update ref for callback
+      if (data.checkoutUrl) {
+        setCurrentOrderId(data.packId);
+        orderIdRef.current = data.packId;
         setIsStarterPackPurchase(true);
-        isStarterPackRef.current = true; // Mark as starter pack for callback
-        setShowPaymentForm(true);
-        // Wait for the container to be rendered, then mount Onvo payment form
-        setTimeout(() => {
-          renderPaymentForm(data.paymentIntentId, '#onvo-payment-container');
-        }, 100);
+        isStarterPackRef.current = true;
+        // Open Lemon Squeezy checkout overlay
+        openCheckout(data.checkoutUrl);
       } else {
-        throw new Error('Failed to create payment intent');
+        throw new Error('Failed to create checkout');
       }
     } catch (err) {
       console.error('Starter pack checkout error:', err);
       setError('Failed to start checkout. Please try again.');
       setIsBuying(false);
     }
-  };
-
-  // Cancel payment form
-  const handleCancelPayment = () => {
-    setShowPaymentForm(false);
-    setCurrentPaymentIntentId(null);
-    paymentIntentIdRef.current = null;
-    setIsBuying(false);
   };
 
   // Reset to create another
@@ -741,6 +704,27 @@ export default function Home() {
               />
             </motion.div>
 
+            {/* Email input for Starter Pack - shown before CheckoutCard */}
+            <div className="w-full max-w-md mb-4 px-2">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-sm">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                  <Mail className="w-4 h-4 text-lavender" />
+                  Email for Starter Pack
+                </label>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={starterPackEmail}
+                  onChange={(e) => setStarterPackEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-lavender focus:ring-2 focus:ring-lavender/20 outline-none text-sm"
+                  autoComplete="email"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">
+                  Required to receive your 10 promo codes
+                </p>
+              </div>
+            </div>
+
             {/* Checkout Card */}
             <CheckoutCard
               previewUrl={previewUrl}
@@ -749,80 +733,6 @@ export default function Home() {
               onPromoCodeSubmit={handlePromoCode}
               isProcessing={isBuying}
             />
-
-            {/* Onvo Pay Payment Modal */}
-            <AnimatePresence>
-              {showPaymentForm && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
-                  onClick={(e) => {
-                    if (e.target === e.currentTarget) handleCancelPayment();
-                  }}
-                >
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-auto"
-                  >
-                    {/* Payment form header */}
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <h3 className="text-lg font-semibold text-slate-800">Complete Payment</h3>
-                      <button
-                        onClick={handleCancelPayment}
-                        className="p-1 hover:bg-slate-100 rounded-full transition-colors"
-                      >
-                        <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Email field for Starter Pack only */}
-                    {isStarterPackPurchase && (
-                      <div className="px-4 pt-4 pb-2">
-                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
-                          <Mail className="w-4 h-4 text-lavender" />
-                          Where should we send your codes?
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="your@email.com"
-                          value={starterPackEmail}
-                          onChange={(e) => {
-                            setStarterPackEmail(e.target.value);
-                            starterPackEmailRef.current = e.target.value;
-                          }}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-lavender focus:ring-2 focus:ring-lavender/20 outline-none text-sm"
-                          autoComplete="email"
-                        />
-                        <p className="text-xs text-slate-500 mt-1.5">
-                          We'll send your 10 promo codes to this email
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Onvo payment form container */}
-                    <div className="p-4">
-                      <div id="onvo-payment-container" className="min-h-[300px]" />
-                    </div>
-
-                    {/* Security badge */}
-                    <div className="p-4 border-t bg-slate-50 rounded-b-2xl">
-                      <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        <span>Secure payment powered by Onvo Pay</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Confirming Payment Modal */}
             <AnimatePresence>

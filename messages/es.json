@@ -67,17 +67,9 @@
     "starter_pack": "Pack Inicial",
     "stickers_anytime": "{count} stickers para usar cuando quieras",
     "save_percent": "Ahorra {percent}% vs individual",
-    "codes_to_email": "Codigos enviados a tu email",
+    "codes_to_email": "1 instantaneo + 9 codigos por email",
     "get_starter_pack": "Obtener Pack Inicial",
     "secure_payment": "Pago seguro con LemonSqueezy"
-  },
-  "payment": {
-    "complete": "Completar Pago",
-    "email_label": "Donde enviamos tus codigos?",
-    "email_placeholder": "tu@email.com",
-    "email_helper": "Enviaremos tus 10 codigos promo a este email",
-    "confirming": "Confirmando Pago...",
-    "generating_codes": "Generando tus 10 codigos promo"
   },
   "results": {
     "ready": "Tu sticker esta listo!",
@@ -95,7 +87,6 @@
   "errors": {
     "upload_image": "Por favor sube un archivo de imagen",
     "file_too_large": "La imagen debe ser menor a 10MB",
-    "invalid_email": "Por favor ingresa un email valido para recibir tus codigos",
     "payment_failed": "El pago fallo. Por favor intenta de nuevo.",
     "payment_state_error": "Error de estado de pago. Por favor intenta de nuevo.",
     "pack_failed": "Pago confirmado pero fallo al procesar tu pack. Por favor contacta soporte.",

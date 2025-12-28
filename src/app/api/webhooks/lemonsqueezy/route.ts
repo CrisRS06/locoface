@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         // Check if already processed (idempotency)
         const { data: existingPack } = await supabaseAdmin
           .from('credit_packs')
-          .select('status')
+          .select('status, preview_id')
           .eq('id', packId)
           .single();
 
@@ -112,22 +112,46 @@ export async function POST(req: Request) {
           return NextResponse.json({ received: true, error: 'Failed to create codes' });
         }
 
-        // Update credit_pack status
+        // Get the HD sticker to unlock (from preview_id stored in pack)
+        let hdBase64: string | null = null;
+        const packPreviewId = existingPack?.preview_id;
+
+        if (packPreviewId && codes[0]) {
+          // Get the preview image to unlock
+          const { data: preview } = await supabaseAdmin
+            .from('preview_images')
+            .select('preview_base64')
+            .eq('id', packPreviewId)
+            .single();
+
+          if (preview?.preview_base64) {
+            hdBase64 = preview.preview_base64;
+
+            // Mark first code as used (for the instant unlock)
+            await supabaseAdmin
+              .from('promo_codes')
+              .update({ current_uses: 1 })
+              .eq('code', codes[0]);
+          }
+        }
+
+        // Update credit_pack with email, HD image, and paid status
         await supabaseAdmin
           .from('credit_packs')
           .update({
             buyer_email: buyerEmail,
             lemon_order_id: lemonOrderId,
+            hd_base64: hdBase64,
             status: 'paid',
             codes_generated: codes.length,
             updated_at: new Date().toISOString(),
           })
           .eq('id', packId);
 
-        // Send email with codes
-        if (buyerEmail) {
+        // Send email with remaining 9 codes (first was used for instant unlock)
+        if (buyerEmail && codes.length > 1) {
           try {
-            await sendStarterPackCodes({ to: buyerEmail, codes });
+            await sendStarterPackCodes({ to: buyerEmail, codes: codes.slice(1) });
           } catch (emailError) {
             console.error('Failed to send starter pack email:', emailError);
           }

@@ -27,7 +27,7 @@ export async function sendStarterPackCodes({ to, codes }: StarterPackEmailParams
   const { data, error } = await getResend().emails.send({
     from: 'LocoFace <noreply@locoface.com>',
     to,
-    subject: '🎉 Tus 10 códigos de LocoFace están listos!',
+    subject: '🎉 Tus 9 códigos bonus de LocoFace!',
     html: `
       <!DOCTYPE html>
       <html>
@@ -40,13 +40,18 @@ export async function sendStarterPackCodes({ to, codes }: StarterPackEmailParams
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 32px;">
               <img src="https://locoface.com/logo-full.png" alt="LocoFace" style="width: 80px; height: 80px;">
-              <h1 style="color: #1e293b; font-size: 24px; margin: 16px 0 8px;">¡Gracias por tu compra!</h1>
-              <p style="color: #64748b; margin: 0;">Tu Starter Pack está listo para usar</p>
+              <h1 style="color: #1e293b; font-size: 24px; margin: 16px 0 8px;">¡Tu Starter Pack está activado!</h1>
+              <p style="color: #64748b; margin: 0;">Ya desbloqueaste tu primer sticker. Aquí están tus códigos restantes.</p>
+            </div>
+
+            <!-- Success Message -->
+            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: center;">
+              <p style="color: #065f46; margin: 0; font-weight: 600;">✓ 1 sticker HD ya desbloqueado y listo para descargar</p>
             </div>
 
             <!-- Codes Box -->
             <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-              <h2 style="color: #1e293b; font-size: 18px; margin: 0 0 16px;">Tus 10 códigos:</h2>
+              <h2 style="color: #1e293b; font-size: 18px; margin: 0 0 16px;">Tus 9 códigos bonus:</h2>
               ${codesHtml}
               <p style="color: #94a3b8; font-size: 14px; margin: 16px 0 0; text-align: center;">
                 Cada código = 1 sticker gratis • Los códigos nunca expiran
@@ -60,14 +65,14 @@ export async function sendStarterPackCodes({ to, codes }: StarterPackEmailParams
                 <li>Ve a <a href="https://locoface.com" style="color: #f472b6; text-decoration: none;">locoface.com</a></li>
                 <li>Sube tu foto</li>
                 <li>En el checkout, ingresa tu código</li>
-                <li>¡Descarga tu sticker!</li>
+                <li>¡Descarga tu sticker HD!</li>
               </ol>
             </div>
 
             <!-- CTA Button -->
             <div style="text-align: center; margin-top: 24px;">
               <a href="https://locoface.com" style="display: inline-block; background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px;">
-                Crear mi primer sticker
+                Crear otro sticker
               </a>
             </div>
 

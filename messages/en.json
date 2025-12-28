@@ -67,17 +67,9 @@
     "starter_pack": "Starter Pack",
     "stickers_anytime": "{count} stickers to use anytime",
     "save_percent": "Save {percent}% vs individual",
-    "codes_to_email": "Codes delivered to your email",
+    "codes_to_email": "1 instant + 9 codes by email",
     "get_starter_pack": "Get Starter Pack",
     "secure_payment": "Secure payment powered by LemonSqueezy"
-  },
-  "payment": {
-    "complete": "Complete Payment",
-    "email_label": "Where should we send your codes?",
-    "email_placeholder": "your@email.com",
-    "email_helper": "We'll send your 10 promo codes to this email",
-    "confirming": "Confirming Payment...",
-    "generating_codes": "Generating your 10 promo codes"
   },
   "results": {
     "ready": "Your sticker is ready!",
@@ -95,7 +87,6 @@
   "errors": {
     "upload_image": "Please upload an image file",
     "file_too_large": "Image must be less than 10MB",
-    "invalid_email": "Please enter a valid email to receive your codes",
     "payment_failed": "Payment failed. Please try again.",
     "payment_state_error": "Payment state error. Please try again.",
     "pack_failed": "Payment confirmed but failed to process your pack. Please contact support.",

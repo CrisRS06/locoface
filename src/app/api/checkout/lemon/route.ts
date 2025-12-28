@@ -24,8 +24,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Preview ID is required' }, { status: 400 });
     }
 
-    if (type === 'starter_pack' && !email) {
-      return NextResponse.json({ error: 'Email is required for starter pack' }, { status: 400 });
+    // For starter_pack, we need previewId to unlock the sticker after payment
+    if (type === 'starter_pack' && !previewId) {
+      return NextResponse.json({ error: 'Preview ID is required for starter pack' }, { status: 400 });
     }
 
     const LEMON_API_KEY = process.env.LEMON_SQUEEZY_API_KEY;
@@ -88,12 +89,12 @@ export async function POST(req: Request) {
       orderId = order.id;
       variantId = VARIANT_ID_INDIVIDUAL || '';
     } else {
-      // Create pending credit pack
+      // Create pending credit pack with preview_id (email comes from LS webhook after payment)
       const { data: pack, error: dbError } = await supabaseAdmin
         .from('credit_packs')
         .insert([
           {
-            buyer_email: email,
+            preview_id: previewId,
             pack_type: 'starter',
             total_codes: 10,
             status: 'pending',
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
               enabled_variants: [parseInt(variantId)],
               redirect_url: type === 'individual'
                 ? `${baseUrl}/download/${orderId}`
-                : `${baseUrl}/thank-you`,
+                : `${baseUrl}/starter-pack/success?packId=${packId}`,
             },
           },
           relationships: {

@@ -16,7 +16,6 @@ import {
   Sparkles,
   AlertCircle,
   Share2,
-  Mail,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -71,7 +70,6 @@ export default function Home() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
-  const [starterPackEmail, setStarterPackEmail] = useState('');
 
   // Christmas mode
   const { isChristmas } = useChristmas();
@@ -236,13 +234,7 @@ export default function Home() {
 
   // Starter Pack purchase handler - Lemon Squeezy (full page redirect for Apple Pay)
   const handleStarterPackPurchase = async () => {
-    if (!lemonReady) return;
-
-    // Need email first
-    if (!starterPackEmail || !starterPackEmail.includes('@')) {
-      setError('Please enter a valid email to receive your codes');
-      return;
-    }
+    if (!lemonReady || !previewId) return;
 
     // Meta Pixel - Track InitiateCheckout for Starter Pack
     if (typeof window !== 'undefined' && window.fbq) {
@@ -262,16 +254,16 @@ export default function Home() {
       const response = await fetch('/api/checkout/lemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'starter_pack', email: starterPackEmail }),
+        body: JSON.stringify({ type: 'starter_pack', previewId }),
       });
 
       const data = await response.json();
 
       if (data.checkoutUrl) {
         // Redirect to Lemon Squeezy checkout (enables Apple Pay)
+        // Email is collected by Lemon Squeezy during checkout
         openCheckout(data.checkoutUrl);
-        // Note: User will be redirected back to /thank-you after payment
-        // Webhook will send promo codes to their email
+        // User will be redirected to /starter-pack/success after payment
       } else {
         throw new Error('Failed to create checkout');
       }
@@ -571,27 +563,6 @@ export default function Home() {
                 className="drop-shadow-lg"
               />
             </motion.div>
-
-            {/* Email input for Starter Pack - shown before CheckoutCard */}
-            <div className="w-full max-w-md mb-4 px-2">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-sm">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
-                  <Mail className="w-4 h-4 text-lavender" />
-                  Email for Starter Pack
-                </label>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={starterPackEmail}
-                  onChange={(e) => setStarterPackEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-lavender focus:ring-2 focus:ring-lavender/20 outline-none text-sm"
-                  autoComplete="email"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">
-                  Required to receive your 10 promo codes
-                </p>
-              </div>
-            </div>
 
             {/* Checkout Card */}
             <CheckoutCard

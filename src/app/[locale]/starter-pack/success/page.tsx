@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Download, CheckCircle, Loader2, Clock, AlertCircle, Mail, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -32,37 +31,40 @@ export default function StarterPackSuccessPage() {
       return false;
     }
 
-    const { data: pack, error } = await supabase
-      .from('credit_packs')
-      .select('status, hd_base64')
-      .eq('id', packId)
-      .single();
+    try {
+      const response = await fetch(`/api/starter-pack/status?packId=${packId}`);
+      const data = await response.json();
 
-    if (error || !pack) {
+      if (!data.found) {
+        setStatus('invalid');
+        return false;
+      }
+
+      if (data.status === 'paid' && data.hdUrl) {
+        setHdUrl(data.hdUrl);
+        setStatus('success');
+
+        // Meta Pixel - Track Purchase event
+        if (typeof window !== 'undefined' && window.fbq) {
+          window.fbq('track', 'Purchase', {
+            value: 9.99,
+            currency: 'USD',
+            content_type: 'product',
+            content_name: 'Starter Pack - 10 Stickers',
+            num_items: 10,
+          });
+        }
+        return true;
+      }
+
+      // Still processing (webhook not done yet)
+      setStatus('processing');
+      return false;
+    } catch (error) {
+      console.error('Error checking pack status:', error);
       setStatus('invalid');
       return false;
     }
-
-    if (pack.status === 'paid' && pack.hd_base64) {
-      setHdUrl(pack.hd_base64);
-      setStatus('success');
-
-      // Meta Pixel - Track Purchase event
-      if (typeof window !== 'undefined' && window.fbq) {
-        window.fbq('track', 'Purchase', {
-          value: 9.99,
-          currency: 'USD',
-          content_type: 'product',
-          content_name: 'Starter Pack - 10 Stickers',
-          num_items: 10,
-        });
-      }
-      return true;
-    }
-
-    // Still processing (webhook not done yet)
-    setStatus('processing');
-    return false;
   }, [packId]);
 
   // Initial check and polling

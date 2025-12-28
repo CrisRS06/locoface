@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -71,143 +71,17 @@ export default function Home() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
-  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
-  const [isStarterPackPurchase, setIsStarterPackPurchase] = useState(false);
-  const [starterPackSuccess, setStarterPackSuccess] = useState<string | null>(null);
   const [starterPackEmail, setStarterPackEmail] = useState('');
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-
-  // useRef to avoid stale closure issue with payment callbacks
-  const previewIdRef = useRef<string | undefined>(undefined);
-  const isStarterPackRef = useRef<boolean>(false);
-  const starterPackEmailRef = useRef<string>('');
-  const orderIdRef = useRef<string | null>(null);
 
   // Christmas mode
   const { isChristmas } = useChristmas();
 
-  // Confirm payment with polling (for Lemon Squeezy)
-  const confirmLemonPayment = async (orderId: string) => {
-    const maxAttempts = 15;
-    const delayMs = 2000;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const response = await fetch('/api/orders/complete?' + new URLSearchParams({ previewId: previewIdRef.current || '' }));
-        const result = await response.json();
-
-        if (result.success && result.status === 'paid' && result.hdUrl) {
-          return result;
-        }
-
-        // Payment not ready yet, wait and retry
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-      } catch (err) {
-        console.error('Confirm attempt failed:', err);
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-      }
-    }
-
-    return null;
-  };
-
-  // Confirm starter pack payment with polling
-  const confirmStarterPack = async (packId: string) => {
-    const maxAttempts = 15;
-    const delayMs = 2000;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        // For starter packs, we just need to wait for webhook to process
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-
-        // After 10 seconds, assume it worked (webhook should have processed)
-        if (attempt >= 5) {
-          return { success: true };
-        }
-      } catch (err) {
-        console.error('Confirm starter pack attempt failed:', err);
-      }
-    }
-
-    return { success: true }; // Optimistic - webhook will handle it
-  };
-
-  // Lemon Squeezy checkout hook
+  // Lemon Squeezy checkout hook - uses full page redirect for Apple Pay support
   const { isReady: lemonReady, openCheckout } = useLemonSqueezy({
-    onSuccess: async () => {
-      const currentPreviewId = previewIdRef.current;
-      const isStarterPack = isStarterPackRef.current;
-      const orderId = orderIdRef.current;
-
-      setIsConfirmingPayment(true);
-
-      // Handle Starter Pack purchase
-      if (isStarterPack) {
-        const email = starterPackEmailRef.current;
-
-        const result = await confirmStarterPack(orderId || '');
-
-        if (result?.success) {
-          // Meta Pixel - Track Purchase for Starter Pack
-          if (typeof window !== 'undefined' && window.fbq) {
-            window.fbq('track', 'Purchase', {
-              value: 9.99,
-              currency: 'USD',
-              content_type: 'product',
-              content_name: 'Starter Pack - 10 Stickers',
-              num_items: 10,
-            });
-          }
-          setStarterPackSuccess(`Your 10 promo codes have been sent to ${email}!`);
-          setShowConfetti(true);
-        } else {
-          setError('Payment confirmed but failed to process your pack. Please contact support.');
-        }
-      }
-      // Handle individual sticker purchase
-      else if (currentPreviewId && orderId) {
-        const result = await confirmLemonPayment(orderId);
-
-        if (result?.hdUrl) {
-          // Meta Pixel - Track Purchase for individual sticker
-          if (typeof window !== 'undefined' && window.fbq) {
-            window.fbq('track', 'Purchase', {
-              value: 1.99,
-              currency: 'USD',
-              content_type: 'product',
-              content_name: 'HD Sticker',
-              num_items: 1,
-            });
-          }
-          setHdUrl(result.hdUrl);
-          setShowConfetti(true);
-          setAppState('results');
-        } else {
-          setError('Payment confirmed but failed to get your sticker. Please contact support.');
-        }
-      } else {
-        setError('Payment state error. Please try again.');
-      }
-
-      setIsConfirmingPayment(false);
-      setIsBuying(false);
-      setCurrentOrderId(null);
-      setIsStarterPackPurchase(false);
-      orderIdRef.current = null;
-      isStarterPackRef.current = false;
-    },
     onError: (error) => {
       console.error('Payment error:', error);
-      setError('Payment failed. Please try again.');
+      setError('Failed to start checkout. Please try again.');
       setIsBuying(false);
-      setCurrentOrderId(null);
-      orderIdRef.current = null;
-      setIsConfirmingPayment(false);
     },
   });
 
@@ -265,7 +139,6 @@ export default function Home() {
 
       setPreviewUrl(data.previewUrl); // Blurred version
       setPreviewId(data.previewId);
-      previewIdRef.current = data.previewId; // Also update ref for callback
 
       // Meta Pixel - Track ViewContent when sticker is generated
       if (typeof window !== 'undefined' && window.fbq) {
@@ -293,7 +166,7 @@ export default function Home() {
     if (file) processImage(file);
   };
 
-  // Purchase handler - Lemon Squeezy
+  // Purchase handler - Lemon Squeezy (full page redirect for Apple Pay)
   const handlePurchase = async () => {
     if (!previewId || !lemonReady) return;
 
@@ -321,10 +194,9 @@ export default function Home() {
       const data = await response.json();
 
       if (data.checkoutUrl) {
-        setCurrentOrderId(data.orderId);
-        orderIdRef.current = data.orderId;
-        // Open Lemon Squeezy checkout overlay
+        // Redirect to Lemon Squeezy checkout (enables Apple Pay)
         openCheckout(data.checkoutUrl);
+        // Note: User will be redirected back to /download/{orderId} after payment
       } else {
         throw new Error('Failed to create checkout');
       }
@@ -362,7 +234,7 @@ export default function Home() {
     }
   };
 
-  // Starter Pack purchase handler - Lemon Squeezy
+  // Starter Pack purchase handler - Lemon Squeezy (full page redirect for Apple Pay)
   const handleStarterPackPurchase = async () => {
     if (!lemonReady) return;
 
@@ -383,10 +255,8 @@ export default function Home() {
       });
     }
 
-    starterPackEmailRef.current = starterPackEmail;
     setIsBuying(true);
     setError(null);
-    setStarterPackSuccess(null);
 
     try {
       const response = await fetch('/api/checkout/lemon', {
@@ -398,12 +268,10 @@ export default function Home() {
       const data = await response.json();
 
       if (data.checkoutUrl) {
-        setCurrentOrderId(data.packId);
-        orderIdRef.current = data.packId;
-        setIsStarterPackPurchase(true);
-        isStarterPackRef.current = true;
-        // Open Lemon Squeezy checkout overlay
+        // Redirect to Lemon Squeezy checkout (enables Apple Pay)
         openCheckout(data.checkoutUrl);
+        // Note: User will be redirected back to /thank-you after payment
+        // Webhook will send promo codes to their email
       } else {
         throw new Error('Failed to create checkout');
       }
@@ -733,76 +601,6 @@ export default function Home() {
               onPromoCodeSubmit={handlePromoCode}
               isProcessing={isBuying}
             />
-
-            {/* Confirming Payment Modal */}
-            <AnimatePresence>
-              {isConfirmingPayment && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
-                >
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-sm w-full"
-                  >
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-12 h-12 mx-auto mb-4"
-                    >
-                      <Sparkles className="w-12 h-12 text-coral" />
-                    </motion.div>
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                      {isStarterPackPurchase ? 'Processing Starter Pack...' : 'Confirming Payment...'}
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      {isStarterPackPurchase
-                        ? 'Generating your 10 promo codes'
-                        : 'Please wait while we prepare your sticker'}
-                    </p>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Starter Pack Success Modal */}
-            <AnimatePresence>
-              {starterPackSuccess && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-safe"
-                >
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-sm w-full"
-                  >
-                    <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">
-                      Starter Pack Activated!
-                    </h3>
-                    <p className="text-sm text-slate-600 mb-6">
-                      {starterPackSuccess}
-                    </p>
-                    <Button
-                      onClick={() => setStarterPackSuccess(null)}
-                      className="w-full"
-                    >
-                      Got it!
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Try another button */}
             <button

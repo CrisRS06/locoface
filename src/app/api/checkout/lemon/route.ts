@@ -44,6 +44,24 @@ export async function POST(req: Request) {
     let variantId: string;
 
     if (type === 'individual') {
+      // First, verify the preview exists
+      const { data: previewCheck, error: previewError } = await supabaseAdmin
+        .from('preview_images')
+        .select('id, status')
+        .eq('id', previewId)
+        .single();
+
+      if (previewError || !previewCheck) {
+        console.error('Preview not found:', previewId, previewError);
+        return NextResponse.json({
+          error: 'Preview not found',
+          details: `Preview ID ${previewId} does not exist in database`,
+          previewError: previewError?.message
+        }, { status: 404 });
+      }
+
+      console.log('Preview found:', previewCheck);
+
       // Create pending order in Supabase
       const { data: order, error: dbError } = await supabaseAdmin
         .from('orders')
@@ -58,8 +76,13 @@ export async function POST(req: Request) {
         .single();
 
       if (dbError) {
-        console.error('Supabase error:', dbError);
-        return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+        console.error('Supabase error creating order:', JSON.stringify(dbError, null, 2));
+        console.error('Preview ID attempted:', previewId);
+        return NextResponse.json({
+          error: 'Failed to create order',
+          details: dbError.message,
+          code: dbError.code
+        }, { status: 500 });
       }
 
       orderId = order.id;
@@ -108,9 +131,9 @@ export async function POST(req: Request) {
             checkout_data: {
               email: email || undefined,
               custom: {
-                order_id: orderId,
-                pack_id: packId,
-                preview_id: previewId,
+                ...(orderId && { order_id: orderId }),
+                ...(packId && { pack_id: packId }),
+                ...(previewId && { preview_id: previewId }),
                 type: type,
               },
             },
@@ -146,8 +169,14 @@ export async function POST(req: Request) {
 
     if (!checkoutResponse.ok) {
       const errorData = await checkoutResponse.json();
-      console.error('Lemon Squeezy checkout error:', errorData);
-      return NextResponse.json({ error: 'Failed to create checkout' }, { status: 500 });
+      console.error('Lemon Squeezy checkout error:', JSON.stringify(errorData, null, 2));
+      console.error('Request details - Store:', STORE_ID, 'Variant:', variantId);
+      return NextResponse.json({
+        error: 'Failed to create checkout',
+        lemonError: errorData,
+        storeId: STORE_ID,
+        variantId: variantId
+      }, { status: 500 });
     }
 
     const checkoutData: LemonSqueezyCheckoutResponse = await checkoutResponse.json();

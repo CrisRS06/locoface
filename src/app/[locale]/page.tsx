@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -60,6 +61,10 @@ type AppState = 'hero' | 'processing' | 'checkout' | 'results';
 type ProcessingStage = 'preparing' | 'generating';
 
 export default function Home() {
+  // Get locale from URL params
+  const params = useParams();
+  const locale = (params.locale as string) || 'es';
+
   // State management
   const [appState, setAppState] = useState<AppState>('hero');
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('preparing');
@@ -254,7 +259,7 @@ export default function Home() {
       const response = await fetch('/api/checkout/lemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'starter_pack', previewId }),
+        body: JSON.stringify({ type: 'starter_pack', previewId, locale }),
       });
 
       const data = await response.json();

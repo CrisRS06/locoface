@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         // Check if already processed (idempotency)
         const { data: existingPack } = await supabaseAdmin
           .from('credit_packs')
-          .select('status, preview_id')
+          .select('status, preview_id, locale')
           .eq('id', packId)
           .single();
 
@@ -151,7 +151,11 @@ export async function POST(req: Request) {
         // Send email with remaining 9 codes (first was used for instant unlock)
         if (buyerEmail && codes.length > 1) {
           try {
-            await sendStarterPackCodes({ to: buyerEmail, codes: codes.slice(1) });
+            await sendStarterPackCodes({
+              to: buyerEmail,
+              codes: codes.slice(1),
+              locale: (existingPack?.locale as 'en' | 'es') || 'es',
+            });
           } catch (emailError) {
             console.error('Failed to send starter pack email:', emailError);
           }

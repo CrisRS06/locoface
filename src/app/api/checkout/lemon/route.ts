@@ -17,7 +17,7 @@ interface LemonSqueezyCheckoutResponse {
 
 export async function POST(req: Request) {
   try {
-    const { previewId, type = 'individual', email } = await req.json();
+    const { previewId, type = 'individual', email, locale = 'es' } = await req.json();
 
     // Validate required fields
     if (type === 'individual' && !previewId) {
@@ -98,6 +98,7 @@ export async function POST(req: Request) {
             pack_type: 'starter',
             total_codes: 10,
             status: 'pending',
+            locale: locale,
           },
         ])
         .select()

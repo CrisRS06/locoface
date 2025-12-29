@@ -44,8 +44,9 @@ export default function StarterPackSuccessPage() {
         setHdUrl(data.hdUrl);
         setStatus('success');
 
-        // Meta Pixel - Track Purchase event
-        if (typeof window !== 'undefined' && window.fbq) {
+        // Meta Pixel - Track Purchase event (only once per pack to prevent duplicates)
+        const purchaseKey = `fbq_purchase_pack_${packId}`;
+        if (typeof window !== 'undefined' && window.fbq && !sessionStorage.getItem(purchaseKey)) {
           window.fbq('track', 'Purchase', {
             value: 9.99,
             currency: 'USD',
@@ -53,6 +54,7 @@ export default function StarterPackSuccessPage() {
             content_name: 'Starter Pack - 10 Stickers',
             num_items: 10,
           });
+          sessionStorage.setItem(purchaseKey, 'true');
         }
         return true;
       }

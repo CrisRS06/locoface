@@ -74,14 +74,16 @@ export default function DownloadPage() {
       setHdUrl(order.hd_base64);
       setStatus('valid');
 
-      // Meta Pixel - Track Purchase event
-      if (typeof window !== 'undefined' && window.fbq) {
+      // Meta Pixel - Track Purchase event (only once per order to prevent duplicates)
+      const purchaseKey = `fbq_purchase_${token}`;
+      if (typeof window !== 'undefined' && window.fbq && !sessionStorage.getItem(purchaseKey)) {
         window.fbq('track', 'Purchase', {
           value: 1.99,
           currency: 'USD',
           content_type: 'product',
           content_name: 'HD Sticker',
         });
+        sessionStorage.setItem(purchaseKey, 'true');
       }
       return true;
     }

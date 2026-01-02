@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI, { toFile } from 'openai';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { createPreviewWithLock } from '@/utils/blur';
+import { applyWatermark } from '@/utils/watermark';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -142,10 +142,11 @@ export async function POST(req: Request) {
     const imageBase64 = imageData.b64_json;
     console.log('OpenAI image generated successfully');
 
-    // 6. Create HD (clean) and preview (blurred with lock) versions
+    // 6. Create HD (clean) and preview (watermarked) versions
+    // User sees the actual sticker clearly but with LOCOFACE.COM watermark
     const hdBuffer = Buffer.from(imageBase64, 'base64');
     const hdBase64 = `data:image/png;base64,${imageBase64}`;
-    const previewBase64 = await createPreviewWithLock(hdBuffer);
+    const previewBase64 = await applyWatermark(hdBuffer);
 
     // 7. Update Supabase with both versions
     const { error: updateError } = await supabaseAdmin
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
       .update({
         status: 'ready',
         preview_base64: hdBase64, // HD version stored for after payment
-        watermarked_base64: previewBase64, // Blurred version for display
+        watermarked_base64: previewBase64, // Watermarked version for display (no blur)
       })
       .eq('id', previewId);
 
@@ -161,11 +162,11 @@ export async function POST(req: Request) {
       console.error('Supabase update error:', updateError);
     }
 
-    // Return blurred preview (paywall enabled)
+    // Return watermarked preview (paywall enabled)
     return NextResponse.json({
       success: true,
       previewId,
-      previewUrl: previewBase64, // Blurred with lock
+      previewUrl: previewBase64, // Clear image with LOCOFACE.COM watermark
     });
 
   } catch (error) {

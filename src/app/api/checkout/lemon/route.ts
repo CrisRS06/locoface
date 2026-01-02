@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const STICKER_PRICE_CENTS = 199; // $1.99
+const STICKER_PRICE_CENTS = 250; // $2.50 (updated pricing)
 const STARTER_PACK_PRICE_CENTS = 999; // $9.99
+const SUPER_PACK_PRICE_CENTS = 1999; // $19.99
 
 interface LemonSqueezyCheckoutResponse {
   data: {
@@ -29,10 +30,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Preview ID is required for starter pack' }, { status: 400 });
     }
 
+    // For super_pack, we need previewId to unlock the sticker after payment
+    if (type === 'super_pack' && !previewId) {
+      return NextResponse.json({ error: 'Preview ID is required for super pack' }, { status: 400 });
+    }
+
     const LEMON_API_KEY = process.env.LEMON_SQUEEZY_API_KEY;
     const STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID;
     const VARIANT_ID_INDIVIDUAL = process.env.LEMON_SQUEEZY_VARIANT_ID_INDIVIDUAL;
     const VARIANT_ID_PACK = process.env.LEMON_SQUEEZY_VARIANT_ID_PACK;
+    const VARIANT_ID_SUPER_PACK = process.env.LEMON_SQUEEZY_VARIANT_ID_SUPER_PACK;
 
     if (!LEMON_API_KEY || !STORE_ID) {
       console.error('Lemon Squeezy not configured');
@@ -88,7 +95,7 @@ export async function POST(req: Request) {
 
       orderId = order.id;
       variantId = VARIANT_ID_INDIVIDUAL || '';
-    } else {
+    } else if (type === 'starter_pack') {
       // Create pending credit pack with preview_id (email comes from LS webhook after payment)
       const { data: pack, error: dbError } = await supabaseAdmin
         .from('credit_packs')
@@ -111,6 +118,31 @@ export async function POST(req: Request) {
 
       packId = pack.id;
       variantId = VARIANT_ID_PACK || '';
+    } else if (type === 'super_pack') {
+      // Create pending credit pack for super pack (30 stickers)
+      const { data: pack, error: dbError } = await supabaseAdmin
+        .from('credit_packs')
+        .insert([
+          {
+            preview_id: previewId,
+            pack_type: 'super',
+            total_codes: 30,
+            status: 'pending',
+            locale: locale,
+          },
+        ])
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('Supabase error:', dbError);
+        return NextResponse.json({ error: 'Failed to create super pack' }, { status: 500 });
+      }
+
+      packId = pack.id;
+      variantId = VARIANT_ID_SUPER_PACK || '';
+    } else {
+      return NextResponse.json({ error: 'Invalid purchase type' }, { status: 400 });
     }
 
     if (!variantId) {
@@ -148,7 +180,9 @@ export async function POST(req: Request) {
               enabled_variants: [parseInt(variantId)],
               redirect_url: type === 'individual'
                 ? `${baseUrl}/download/${orderId}`
-                : `${baseUrl}/starter-pack/success?packId=${packId}`,
+                : type === 'super_pack'
+                  ? `${baseUrl}/super-pack/success?packId=${packId}`
+                  : `${baseUrl}/starter-pack/success?packId=${packId}`,
             },
           },
           relationships: {

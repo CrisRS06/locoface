@@ -13,3 +13,6 @@ export interface StarterPackContent {
   helpText: string;
   copyright: string;
 }
+
+// Super Pack uses same structure with different text
+export type SuperPackContent = StarterPackContent;

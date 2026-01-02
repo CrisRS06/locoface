@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import type { Locale } from './types';
-import { starterPackTranslations } from './templates/translations';
+import { starterPackTranslations, superPackTranslations } from './templates/translations';
 import { renderStarterPackEmail } from './templates/starter-pack';
 
 // Lazy initialization to avoid build-time errors
@@ -41,6 +41,37 @@ export async function sendStarterPackCodes({
 
   if (error) {
     console.error('Email send error:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+interface SuperPackEmailParams {
+  to: string;
+  codes: string[];
+  locale?: Locale;
+}
+
+export async function sendSuperPackCodes({
+  to,
+  codes,
+  locale = 'es',
+}: SuperPackEmailParams) {
+  // Get translations with fallback to Spanish
+  const content = superPackTranslations[locale] || superPackTranslations.es;
+  // Reuse the same email template (structure is identical)
+  const html = renderStarterPackEmail(content, codes);
+
+  const { data, error } = await getResend().emails.send({
+    from: 'LocoFace <noreply@locoface.com>',
+    to,
+    subject: content.subject,
+    html,
+  });
+
+  if (error) {
+    console.error('Super pack email send error:', error);
     throw error;
   }
 

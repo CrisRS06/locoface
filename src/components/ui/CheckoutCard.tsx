@@ -15,6 +15,8 @@ import {
   Package,
   Mail,
   Percent,
+  Zap,
+  Crown,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from './Button';
@@ -24,12 +26,13 @@ interface CheckoutCardProps {
   previewUrl: string;
   onPayWithCard: () => void;
   onPayForStarterPack: () => void;
+  onPayForSuperPack: () => void;
   onPromoCodeSubmit: (code: string) => Promise<boolean>;
   isProcessing?: boolean;
 }
 
-const REGULAR_PRICE = 3.99;
-const SPECIAL_PRICE = 1.99;
+const REGULAR_PRICE = 4.99;
+const SPECIAL_PRICE = 2.50;
 const DISCOUNT_PERCENT = 50;
 const COUNTDOWN_MINUTES = 5;
 
@@ -38,10 +41,16 @@ const STARTER_PACK_PRICE = 9.99;
 const STARTER_PACK_STICKERS = 10;
 const STARTER_PACK_SAVINGS = Math.round((1 - (STARTER_PACK_PRICE / (SPECIAL_PRICE * STARTER_PACK_STICKERS))) * 100);
 
+// Super Pack pricing - Best for ads/power users
+const SUPER_PACK_PRICE = 19.99;
+const SUPER_PACK_STICKERS = 30;
+const SUPER_PACK_SAVINGS = Math.round((1 - (SUPER_PACK_PRICE / (SPECIAL_PRICE * SUPER_PACK_STICKERS))) * 100);
+
 export function CheckoutCard({
   previewUrl,
   onPayWithCard,
   onPayForStarterPack,
+  onPayForSuperPack,
   onPromoCodeSubmit,
   isProcessing = false,
 }: CheckoutCardProps) {
@@ -329,6 +338,65 @@ export function CheckoutCard({
                 <Package className="w-5 h-5 mr-2" />
               )}
               {t('get_starter_pack')}
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Super Pack Option - MAX VALUE */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative mt-3"
+        >
+          {/* Max Value Badge */}
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+            <span className="px-3 py-1 bg-gradient-to-r from-coral to-orange-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+              <Crown className="w-3 h-3" />
+              {t('max_value') || 'MAX VALUE'}
+            </span>
+          </div>
+
+          <div className="border-2 border-coral/50 rounded-2xl p-4 bg-gradient-to-br from-coral/5 to-orange-500/5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-coral" />
+                <span className="font-bold text-slate-800">{t('super_pack') || 'Super Pack'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400 line-through">${(SPECIAL_PRICE * SUPER_PACK_STICKERS).toFixed(2)}</span>
+                <span className="text-xl font-bold text-coral">${SUPER_PACK_PRICE}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span><strong>{SUPER_PACK_STICKERS}</strong> {t('stickers_anytime', { count: SUPER_PACK_STICKERS }).replace(`${SUPER_PACK_STICKERS} `, '')}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Percent className="w-4 h-4 text-coral" />
+                <span>{t('save_percent', { percent: SUPER_PACK_SAVINGS })}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Mail className="w-4 h-4 text-coral" />
+                <span>{t('codes_to_email')}</span>
+              </div>
+            </div>
+
+            <Button
+              variant="coral"
+              size="lg"
+              className="w-full"
+              onClick={onPayForSuperPack}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : (
+                <Zap className="w-5 h-5 mr-2" />
+              )}
+              {t('get_super_pack') || 'Get Super Pack'}
             </Button>
           </div>
         </motion.div>

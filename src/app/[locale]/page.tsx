@@ -279,6 +279,47 @@ export default function Home() {
     }
   };
 
+  // Super Pack purchase handler - Lemon Squeezy (30 stickers for $19.99)
+  const handleSuperPackPurchase = async () => {
+    if (!lemonReady || !previewId) return;
+
+    // Meta Pixel - Track InitiateCheckout for Super Pack
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        content_name: 'Super Pack - 30 Stickers',
+        currency: 'USD',
+        value: 19.99,
+        num_items: 30,
+      });
+    }
+
+    setIsBuying(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/checkout/lemon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'super_pack', previewId, locale }),
+      });
+
+      const data = await response.json();
+
+      if (data.checkoutUrl) {
+        // Redirect to Lemon Squeezy checkout (enables Apple Pay)
+        openCheckout(data.checkoutUrl);
+        // User will be redirected to /super-pack/success after payment
+      } else {
+        throw new Error('Failed to create checkout');
+      }
+    } catch (err) {
+      console.error('Super pack checkout error:', err);
+      setError('Failed to start checkout. Please try again.');
+      setIsBuying(false);
+    }
+  };
+
   // Reset to create another
   const handleReset = () => {
     setPreviewUrl(null);
@@ -574,6 +615,7 @@ export default function Home() {
               previewUrl={previewUrl}
               onPayWithCard={handlePurchase}
               onPayForStarterPack={handleStarterPackPurchase}
+              onPayForSuperPack={handleSuperPackPurchase}
               onPromoCodeSubmit={handlePromoCode}
               isProcessing={isBuying}
             />

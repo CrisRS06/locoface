@@ -69,6 +69,10 @@
     "save_percent": "Ahorra {percent}% vs individual",
     "codes_to_email": "1 instantaneo + 9 codigos por email",
     "get_starter_pack": "Obtener Pack Inicial",
+    "max_value": "MAXIMO VALOR",
+    "super_pack": "Super Pack",
+    "super_pack_codes_to_email": "1 instantaneo + 29 codigos por email",
+    "get_super_pack": "Obtener Super Pack",
     "secure_payment": "Pago seguro con LemonSqueezy"
   },
   "results": {

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Lock,
   Image as ImageIcon,
   Calendar,
   CheckCircle,
@@ -17,11 +16,8 @@ import {
   Percent,
   Zap,
   Crown,
-  Shield,
   Sparkles,
-  ChevronDown,
   Star,
-  MessageCircle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from './Button';
@@ -51,45 +47,7 @@ const SUPER_PACK_PRICE = 19.99;
 const SUPER_PACK_STICKERS = 30;
 const SUPER_PACK_SAVINGS = Math.round((1 - (SUPER_PACK_PRICE / (SPECIAL_PRICE * SUPER_PACK_STICKERS))) * 100);
 
-// Mini testimonials
-const TESTIMONIALS = [
-  { text: 'Love it! Made stickers for my whole family', author: 'Maria T.', emoji: '🥰' },
-  { text: 'So cute! My friends keep asking how I made it', author: 'Jake L.', emoji: '✨' },
-  { text: 'Best $2.50 I ever spent. Totally worth it!', author: 'Sarah K.', emoji: '💕' },
-];
 
-// Payment icons as simple SVG components
-const VisaIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-6 w-auto">
-    <rect fill="#1A1F71" width="48" height="32" rx="4"/>
-    <path fill="#fff" d="M19.5 21h-2.7l1.7-10.5h2.7L19.5 21zm-4.4 0h-2.8l-2.2-8.2-.9 1.3-.1.2-.6 3.4-.3 1.8-.1.6-.1.9h-2.8l2.8-10.5h3.4l2.7 10.5zm16.3-6.8c0-1.3-1.1-2.3-2.8-2.3-1.4 0-2.3.7-2.3 1.7 0 .8.6 1.3 1.9 1.7l.8.2c.6.1.9.4.9.7 0 .5-.5.8-1.4.8-.9 0-1.6-.3-2-.9l-1.5 1.2c.7.9 1.9 1.5 3.4 1.5 1.9 0 3.2-1 3.2-2.5 0-.8-.5-1.4-1.6-1.8l-1-.3c-.7-.2-1-.4-1-.8 0-.4.4-.7 1.1-.7.7 0 1.3.3 1.6.7l1.3-1.2c-.6-.7-1.5-1.1-2.6-1.1zm5.1-3.7L33.8 21h2.9l.4-1.8h3.1l.2 1.8h2.5l-2.2-10.5h-3.2zm1.8 6.6l1.3-5.1.6 5.1h-1.9z"/>
-  </svg>
-);
-
-const MastercardIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-6 w-auto">
-    <rect fill="#000" width="48" height="32" rx="4"/>
-    <circle fill="#EB001B" cx="18" cy="16" r="9"/>
-    <circle fill="#F79E1B" cx="30" cy="16" r="9"/>
-    <path fill="#FF5F00" d="M24 9.5c2.1 1.7 3.5 4.3 3.5 7.2s-1.4 5.5-3.5 7.2c-2.1-1.7-3.5-4.3-3.5-7.2s1.4-5.5 3.5-7.2z"/>
-  </svg>
-);
-
-const ApplePayIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-6 w-auto">
-    <rect fill="#000" width="48" height="32" rx="4"/>
-    <path fill="#fff" d="M12.7 11.5c-.4.5-1.1.9-1.8.8-.1-.7.3-1.4.7-1.9.4-.5 1.2-.9 1.8-.9.1.7-.2 1.5-.7 2zm.7.9c-1 0-1.8.6-2.3.6-.5 0-1.2-.5-2-.5-1 0-2 .6-2.5 1.5-1.1 1.9-.3 4.6.8 6.1.5.7 1.1 1.5 1.9 1.5.8 0 1.1-.5 2-.5s1.2.5 2 .5c.8 0 1.3-.7 1.8-1.4.6-.8.8-1.6.8-1.6-.8-.3-1.4-1.2-1.4-2.4 0-1 .5-1.9 1.4-2.4-.5-.8-1.4-1.4-2.5-1.4zm10.5 6.8V12h-1.5v2.3h-.9v1.2h.9v3.9c0 1.2.6 1.8 1.9 1.8h.9v-1.2h-.6c-.5 0-.7-.2-.7-.7zm6.3-2.9c-.3-.7-1-1.2-1.9-1.2-.8 0-1.5.4-1.8 1v-.9h-1.4v6.1h1.5v-3.3c0-.9.5-1.5 1.3-1.5.7 0 1.1.5 1.1 1.3v3.4h1.5v-3.7c.2-.5.6-.8 1.2-.8.7 0 1 .4 1 1.3v3.3h1.5v-3.5c-.1-1.3-.7-2.2-2-2.2-.8 0-1.4.4-1.7 1.1l-.3-.4z"/>
-  </svg>
-);
-
-const GooglePayIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-6 w-auto">
-    <rect fill="#fff" width="48" height="32" rx="4" stroke="#e5e5e5"/>
-    <path fill="#4285F4" d="M24.6 16.8v3h-1.3v-7.5h3.4c.8 0 1.5.3 2.1.8.6.5.9 1.2.9 2s-.3 1.5-.9 2c-.6.5-1.3.8-2.1.8h-2.1zm0-3.5v2.4h2.2c.5 0 .9-.2 1.2-.5.3-.3.5-.7.5-1.2 0-.5-.2-.9-.5-1.2-.3-.3-.7-.5-1.2-.5h-2.2z"/>
-    <path fill="#34A853" d="M34.1 14.4c.9 0 1.6.2 2.1.7.5.5.8 1.1.8 2v4.7h-1.2v-1.1c-.4.8-1.2 1.2-2.2 1.2-.7 0-1.3-.2-1.8-.6-.5-.4-.7-.9-.7-1.5s.2-1.1.7-1.5c.5-.4 1.1-.5 2-.5.7 0 1.3.1 1.8.4v-.3c0-.5-.2-.9-.5-1.2-.3-.3-.8-.5-1.3-.5-.7 0-1.2.3-1.5.8l-1.1-.7c.6-.8 1.4-1.2 2.6-1.2l.3.1zm-1.6 5c0 .3.1.6.4.8.3.2.6.3 1 .3.5 0 1-.2 1.4-.6.4-.4.6-.8.6-1.3-.4-.3-.9-.4-1.6-.4-.5 0-.9.1-1.2.3-.4.2-.6.5-.6.9z"/>
-    <path fill="#EA4335" d="M44.3 14.5l-4 9.2h-1.4l1.5-3.2-2.6-6h1.5l1.8 4.4 1.8-4.4h1.4z"/>
-  </svg>
-);
 
 export function CheckoutCard({
   previewUrl,
@@ -105,7 +63,6 @@ export function CheckoutCard({
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoShake, setPromoShake] = useState(false);
   const [timeLeft, setTimeLeft] = useState(COUNTDOWN_MINUTES * 60);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const t = useTranslations('checkout');
   const tSocial = useTranslations('social');
 
@@ -132,20 +89,6 @@ export function CheckoutCard({
     },
   ];
 
-  const FAQ_ITEMS = [
-    {
-      question: t('faq.use_question') || 'How do I use my sticker?',
-      answer: t('faq.use_answer') || 'Download and share on WhatsApp, iMessage, Telegram, Instagram, and more!',
-    },
-    {
-      question: t('faq.safe_question') || 'Is my photo safe?',
-      answer: t('faq.safe_answer') || 'Yes! We don\'t store your photos. They\'re deleted right after processing.',
-    },
-    {
-      question: t('faq.refund_question') || 'Can I get a refund?',
-      answer: t('faq.refund_answer') || '100% satisfaction guaranteed. Contact support@locoface.com for any issues.',
-    },
-  ];
 
   // Countdown timer
   useEffect(() => {
@@ -227,7 +170,7 @@ export function CheckoutCard({
       </motion.div>
 
       {/* Benefits Card */}
-      <GlassCard variant="elevated" padding="lg" className="mb-4">
+      <GlassCard variant="elevated" padding="lg" className="mb-6">
         <div className="space-y-4">
           {BENEFITS.map((benefit, index) => (
             <motion.div
@@ -259,39 +202,11 @@ export function CheckoutCard({
         </div>
       </GlassCard>
 
-      {/* Mini Testimonials */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-4 px-2"
-      >
-        <div className="flex items-center gap-1 mb-2">
-          <MessageCircle className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-medium text-slate-500">{t('testimonials_title') || 'What customers say'}</span>
-        </div>
-        <div className="space-y-2">
-          {TESTIMONIALS.slice(0, 2).map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-              className="flex items-start gap-2 text-sm"
-            >
-              <span className="text-base">{testimonial.emoji}</span>
-              <p className="text-slate-600 italic">
-                &ldquo;{testimonial.text}&rdquo; <span className="text-slate-400 not-italic">- {testimonial.author}</span>
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
       {/* Countdown Timer */}
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex items-center justify-center gap-2 mb-4 py-3 px-4 bg-coral/10 rounded-full border border-coral/20"
+        className="flex items-center justify-center gap-2 mb-6 py-3 px-4 bg-coral/10 rounded-full border border-coral/20"
       >
         <Clock className="w-4 h-4 text-coral" />
         <span className="text-sm text-slate-700">{t('offer_ends')}</span>
@@ -301,7 +216,7 @@ export function CheckoutCard({
       </motion.div>
 
       {/* Pricing */}
-      <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex items-center justify-between mb-5 px-2">
         <div>
           <p className="text-sm text-slate-500">{t('regular_price')}</p>
           <div className="flex items-center gap-2">
@@ -318,7 +233,7 @@ export function CheckoutCard({
       </div>
 
       {/* Promo Code Input with micro-interactions */}
-      <div className="mb-4">
+      <div className="mb-5">
         <div className="flex gap-2">
           <motion.div
             className="relative flex-1"
@@ -542,83 +457,16 @@ export function CheckoutCard({
         </motion.div>
       </div>
 
-      {/* Trust Badges Section */}
-      <motion.div
+      {/* Trust Line - Simple and Clean */}
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mt-6 pt-4 border-t border-slate-200"
+        className="text-center text-xs text-slate-500 mt-8 pt-4 border-t border-slate-200"
       >
-        {/* Payment Methods */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <VisaIcon />
-          <MastercardIcon />
-          <ApplePayIcon />
-          <GooglePayIcon />
-        </div>
+        🔒 {t('secure_payment')} • ⚡ Instant delivery • Visa, Mastercard, Apple Pay
+      </motion.p>
 
-        {/* Trust Guarantees */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
-            <Shield className="w-4 h-4 text-green-500" />
-            <span>{t('guarantee') || '100% Satisfaction Guarantee'}</span>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
-            <Lock className="w-4 h-4 text-slate-400" />
-            <span>{t('secure_payment')}</span>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
-            <Zap className="w-4 h-4 text-coral" />
-            <span>{t('instant_delivery') || 'Instant delivery to your phone'}</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* FAQ Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="mt-6 pt-4 border-t border-slate-200"
-      >
-        <p className="text-xs font-medium text-slate-500 mb-3 text-center">{t('faq_title') || 'Frequently Asked Questions'}</p>
-        <div className="space-y-2">
-          {FAQ_ITEMS.map((faq, index) => (
-            <div
-              key={index}
-              className="border border-slate-200 rounded-xl overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <span>{faq.question}</span>
-                <motion.div
-                  animate={{ rotate: openFaq === index ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                </motion.div>
-              </button>
-              <AnimatePresence>
-                {openFaq === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="px-4 pb-3 text-sm text-slate-600">
-                      {faq.answer}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-      </motion.div>
     </div>
   );
 }

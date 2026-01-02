@@ -74,7 +74,21 @@
     "super_pack": "Super Pack",
     "super_pack_codes_to_email": "1 instantaneo + 29 codigos por email",
     "get_super_pack": "Obtener Super Pack",
-    "secure_payment": "Pago seguro con LemonSqueezy"
+    "secure_payment": "Pago seguro con LemonSqueezy",
+    "most_popular": "MAS POPULAR",
+    "guarantee": "100% Garantia de Satisfaccion",
+    "instant_delivery": "Entrega instantanea a tu telefono",
+    "promo_success": "✓ Codigo aplicado! 100% de descuento",
+    "testimonials_title": "Lo que dicen nuestros clientes",
+    "faq_title": "Preguntas Frecuentes",
+    "faq": {
+      "use_question": "Como uso mi sticker?",
+      "use_answer": "Descargalo y compartelo en WhatsApp, iMessage, Telegram, Instagram y mas!",
+      "safe_question": "Mi foto esta segura?",
+      "safe_answer": "Si! No guardamos tus fotos. Se eliminan justo despues de procesarlas.",
+      "refund_question": "Puedo obtener un reembolso?",
+      "refund_answer": "100% garantia de satisfaccion. Contacta support@locoface.com para cualquier problema."
+    }
   },
   "results": {
     "ready": "Tu sticker esta listo!",

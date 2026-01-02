@@ -17,6 +17,11 @@ import {
   Percent,
   Zap,
   Crown,
+  Shield,
+  Sparkles,
+  ChevronDown,
+  Star,
+  MessageCircle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from './Button';
@@ -46,6 +51,46 @@ const SUPER_PACK_PRICE = 19.99;
 const SUPER_PACK_STICKERS = 30;
 const SUPER_PACK_SAVINGS = Math.round((1 - (SUPER_PACK_PRICE / (SPECIAL_PRICE * SUPER_PACK_STICKERS))) * 100);
 
+// Mini testimonials
+const TESTIMONIALS = [
+  { text: 'Love it! Made stickers for my whole family', author: 'Maria T.', emoji: '🥰' },
+  { text: 'So cute! My friends keep asking how I made it', author: 'Jake L.', emoji: '✨' },
+  { text: 'Best $2.50 I ever spent. Totally worth it!', author: 'Sarah K.', emoji: '💕' },
+];
+
+// Payment icons as simple SVG components
+const VisaIcon = () => (
+  <svg viewBox="0 0 48 32" className="h-6 w-auto">
+    <rect fill="#1A1F71" width="48" height="32" rx="4"/>
+    <path fill="#fff" d="M19.5 21h-2.7l1.7-10.5h2.7L19.5 21zm-4.4 0h-2.8l-2.2-8.2-.9 1.3-.1.2-.6 3.4-.3 1.8-.1.6-.1.9h-2.8l2.8-10.5h3.4l2.7 10.5zm16.3-6.8c0-1.3-1.1-2.3-2.8-2.3-1.4 0-2.3.7-2.3 1.7 0 .8.6 1.3 1.9 1.7l.8.2c.6.1.9.4.9.7 0 .5-.5.8-1.4.8-.9 0-1.6-.3-2-.9l-1.5 1.2c.7.9 1.9 1.5 3.4 1.5 1.9 0 3.2-1 3.2-2.5 0-.8-.5-1.4-1.6-1.8l-1-.3c-.7-.2-1-.4-1-.8 0-.4.4-.7 1.1-.7.7 0 1.3.3 1.6.7l1.3-1.2c-.6-.7-1.5-1.1-2.6-1.1zm5.1-3.7L33.8 21h2.9l.4-1.8h3.1l.2 1.8h2.5l-2.2-10.5h-3.2zm1.8 6.6l1.3-5.1.6 5.1h-1.9z"/>
+  </svg>
+);
+
+const MastercardIcon = () => (
+  <svg viewBox="0 0 48 32" className="h-6 w-auto">
+    <rect fill="#000" width="48" height="32" rx="4"/>
+    <circle fill="#EB001B" cx="18" cy="16" r="9"/>
+    <circle fill="#F79E1B" cx="30" cy="16" r="9"/>
+    <path fill="#FF5F00" d="M24 9.5c2.1 1.7 3.5 4.3 3.5 7.2s-1.4 5.5-3.5 7.2c-2.1-1.7-3.5-4.3-3.5-7.2s1.4-5.5 3.5-7.2z"/>
+  </svg>
+);
+
+const ApplePayIcon = () => (
+  <svg viewBox="0 0 48 32" className="h-6 w-auto">
+    <rect fill="#000" width="48" height="32" rx="4"/>
+    <path fill="#fff" d="M12.7 11.5c-.4.5-1.1.9-1.8.8-.1-.7.3-1.4.7-1.9.4-.5 1.2-.9 1.8-.9.1.7-.2 1.5-.7 2zm.7.9c-1 0-1.8.6-2.3.6-.5 0-1.2-.5-2-.5-1 0-2 .6-2.5 1.5-1.1 1.9-.3 4.6.8 6.1.5.7 1.1 1.5 1.9 1.5.8 0 1.1-.5 2-.5s1.2.5 2 .5c.8 0 1.3-.7 1.8-1.4.6-.8.8-1.6.8-1.6-.8-.3-1.4-1.2-1.4-2.4 0-1 .5-1.9 1.4-2.4-.5-.8-1.4-1.4-2.5-1.4zm10.5 6.8V12h-1.5v2.3h-.9v1.2h.9v3.9c0 1.2.6 1.8 1.9 1.8h.9v-1.2h-.6c-.5 0-.7-.2-.7-.7zm6.3-2.9c-.3-.7-1-1.2-1.9-1.2-.8 0-1.5.4-1.8 1v-.9h-1.4v6.1h1.5v-3.3c0-.9.5-1.5 1.3-1.5.7 0 1.1.5 1.1 1.3v3.4h1.5v-3.7c.2-.5.6-.8 1.2-.8.7 0 1 .4 1 1.3v3.3h1.5v-3.5c-.1-1.3-.7-2.2-2-2.2-.8 0-1.4.4-1.7 1.1l-.3-.4z"/>
+  </svg>
+);
+
+const GooglePayIcon = () => (
+  <svg viewBox="0 0 48 32" className="h-6 w-auto">
+    <rect fill="#fff" width="48" height="32" rx="4" stroke="#e5e5e5"/>
+    <path fill="#4285F4" d="M24.6 16.8v3h-1.3v-7.5h3.4c.8 0 1.5.3 2.1.8.6.5.9 1.2.9 2s-.3 1.5-.9 2c-.6.5-1.3.8-2.1.8h-2.1zm0-3.5v2.4h2.2c.5 0 .9-.2 1.2-.5.3-.3.5-.7.5-1.2 0-.5-.2-.9-.5-1.2-.3-.3-.7-.5-1.2-.5h-2.2z"/>
+    <path fill="#34A853" d="M34.1 14.4c.9 0 1.6.2 2.1.7.5.5.8 1.1.8 2v4.7h-1.2v-1.1c-.4.8-1.2 1.2-2.2 1.2-.7 0-1.3-.2-1.8-.6-.5-.4-.7-.9-.7-1.5s.2-1.1.7-1.5c.5-.4 1.1-.5 2-.5.7 0 1.3.1 1.8.4v-.3c0-.5-.2-.9-.5-1.2-.3-.3-.8-.5-1.3-.5-.7 0-1.2.3-1.5.8l-1.1-.7c.6-.8 1.4-1.2 2.6-1.2l.3.1zm-1.6 5c0 .3.1.6.4.8.3.2.6.3 1 .3.5 0 1-.2 1.4-.6.4-.4.6-.8.6-1.3-.4-.3-.9-.4-1.6-.4-.5 0-.9.1-1.2.3-.4.2-.6.5-.6.9z"/>
+    <path fill="#EA4335" d="M44.3 14.5l-4 9.2h-1.4l1.5-3.2-2.6-6h1.5l1.8 4.4 1.8-4.4h1.4z"/>
+  </svg>
+);
+
 export function CheckoutCard({
   previewUrl,
   onPayWithCard,
@@ -56,8 +101,11 @@ export function CheckoutCard({
 }: CheckoutCardProps) {
   const [promoCode, setPromoCode] = useState('');
   const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState(false);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoShake, setPromoShake] = useState(false);
   const [timeLeft, setTimeLeft] = useState(COUNTDOWN_MINUTES * 60);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const t = useTranslations('checkout');
   const tSocial = useTranslations('social');
 
@@ -84,6 +132,21 @@ export function CheckoutCard({
     },
   ];
 
+  const FAQ_ITEMS = [
+    {
+      question: t('faq.use_question') || 'How do I use my sticker?',
+      answer: t('faq.use_answer') || 'Download and share on WhatsApp, iMessage, Telegram, Instagram, and more!',
+    },
+    {
+      question: t('faq.safe_question') || 'Is my photo safe?',
+      answer: t('faq.safe_answer') || 'Yes! We don\'t store your photos. They\'re deleted right after processing.',
+    },
+    {
+      question: t('faq.refund_question') || 'Can I get a refund?',
+      answer: t('faq.refund_answer') || '100% satisfaction guaranteed. Contact support@locoface.com for any issues.',
+    },
+  ];
+
   // Countdown timer
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -104,22 +167,33 @@ export function CheckoutCard({
   const handlePromoSubmit = async () => {
     if (!promoCode.trim()) {
       setPromoError(t('promo_error_empty'));
+      triggerShake();
       return;
     }
 
     setIsValidatingPromo(true);
     setPromoError('');
+    setPromoSuccess(false);
 
     try {
       const isValid = await onPromoCodeSubmit(promoCode.trim().toUpperCase());
-      if (!isValid) {
+      if (isValid) {
+        setPromoSuccess(true);
+      } else {
         setPromoError(t('promo_error_invalid'));
+        triggerShake();
       }
     } catch {
       setPromoError(t('promo_error_failed'));
+      triggerShake();
     } finally {
       setIsValidatingPromo(false);
     }
+  };
+
+  const triggerShake = () => {
+    setPromoShake(true);
+    setTimeout(() => setPromoShake(false), 500);
   };
 
   return (
@@ -185,6 +259,34 @@ export function CheckoutCard({
         </div>
       </GlassCard>
 
+      {/* Mini Testimonials */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4 px-2"
+      >
+        <div className="flex items-center gap-1 mb-2">
+          <MessageCircle className="w-4 h-4 text-slate-400" />
+          <span className="text-xs font-medium text-slate-500">{t('testimonials_title') || 'What customers say'}</span>
+        </div>
+        <div className="space-y-2">
+          {TESTIMONIALS.slice(0, 2).map((testimonial, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 + index * 0.1 }}
+              className="flex items-start gap-2 text-sm"
+            >
+              <span className="text-base">{testimonial.emoji}</span>
+              <p className="text-slate-600 italic">
+                &ldquo;{testimonial.text}&rdquo; <span className="text-slate-400 not-italic">- {testimonial.author}</span>
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Countdown Timer */}
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -215,10 +317,14 @@ export function CheckoutCard({
         </div>
       </div>
 
-      {/* Promo Code Input */}
+      {/* Promo Code Input with micro-interactions */}
       <div className="mb-4">
         <div className="flex gap-2">
-          <div className="relative flex-1">
+          <motion.div
+            className="relative flex-1"
+            animate={promoShake ? { x: [-10, 10, -10, 10, 0] } : {}}
+            transition={{ duration: 0.4 }}
+          >
             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
@@ -227,25 +333,47 @@ export function CheckoutCard({
               onChange={(e) => {
                 setPromoCode(e.target.value.toUpperCase());
                 setPromoError('');
+                setPromoSuccess(false);
               }}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none text-sm uppercase"
-              disabled={isValidatingPromo || isProcessing}
+              className={`w-full pl-10 pr-10 py-3 rounded-xl border-2 outline-none text-sm uppercase transition-all ${
+                promoSuccess
+                  ? 'border-green-500 bg-green-50 focus:ring-2 focus:ring-green-500/20'
+                  : promoError
+                  ? 'border-red-400 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-slate-200 focus:border-coral focus:ring-2 focus:ring-coral/20'
+              }`}
+              disabled={isValidatingPromo || isProcessing || promoSuccess}
             />
-          </div>
+            {/* Success checkmark */}
+            <AnimatePresence>
+              {promoSuccess && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
           <Button
             variant="secondary"
             onClick={handlePromoSubmit}
-            disabled={isValidatingPromo || isProcessing || !promoCode.trim()}
+            disabled={isValidatingPromo || isProcessing || !promoCode.trim() || promoSuccess}
             className="px-4"
           >
             {isValidatingPromo ? (
               <Loader2 className="w-4 h-4 animate-spin" />
+            ) : promoSuccess ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
             ) : (
               t('promo_apply')
             )}
           </Button>
         </div>
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {promoError && (
             <motion.p
               initial={{ opacity: 0, y: -5 }}
@@ -254,6 +382,16 @@ export function CheckoutCard({
               className="text-xs text-red-500 mt-1 pl-2"
             >
               {promoError}
+            </motion.p>
+          )}
+          {promoSuccess && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-xs text-green-600 mt-1 pl-2 font-medium"
+            >
+              {t('promo_success') || '✓ Code applied! 100% off your sticker'}
             </motion.p>
           )}
         </AnimatePresence>
@@ -285,28 +423,29 @@ export function CheckoutCard({
           <div className="flex-1 h-px bg-slate-200" />
         </div>
 
-        {/* Starter Pack Option */}
+        {/* Starter Pack Option - MOST POPULAR (highlighted) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative"
         >
-          {/* Best Value Badge */}
+          {/* Most Popular Badge - Changed from Best Value */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-            <span className="px-3 py-1 bg-gradient-to-r from-lavender to-soft-pink text-white text-xs font-bold rounded-full shadow-md">
-              {t('best_value')}
+            <span className="px-3 py-1 bg-gradient-to-r from-coral to-orange-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+              <Star className="w-3 h-3 fill-current" />
+              {t('most_popular') || 'MOST POPULAR'}
             </span>
           </div>
 
-          <div className="border-2 border-lavender/50 rounded-2xl p-4 bg-gradient-to-br from-lavender/5 to-soft-pink/5">
+          <div className="border-2 border-coral rounded-2xl p-4 bg-gradient-to-br from-coral/5 to-orange-500/5 ring-2 ring-coral/20 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-lavender" />
+                <Package className="w-5 h-5 text-coral" />
                 <span className="font-bold text-slate-800">{t('starter_pack')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-400 line-through">${(SPECIAL_PRICE * STARTER_PACK_STICKERS).toFixed(2)}</span>
-                <span className="text-xl font-bold text-slate-900">${STARTER_PACK_PRICE}</span>
+                <span className="text-xl font-bold text-coral">${STARTER_PACK_PRICE}</span>
               </div>
             </div>
 
@@ -320,52 +459,53 @@ export function CheckoutCard({
                 <span>{t('save_percent', { percent: STARTER_PACK_SAVINGS })}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Mail className="w-4 h-4 text-lavender" />
+                <Mail className="w-4 h-4 text-coral" />
                 <span>{t('codes_to_email')}</span>
               </div>
             </div>
 
             <Button
-              variant="secondary"
+              variant="coral"
               size="lg"
-              className="w-full border-2 border-lavender hover:bg-lavender/10"
+              glow
+              className="w-full"
               onClick={onPayForStarterPack}
               disabled={isProcessing}
             >
               {isProcessing ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : (
-                <Package className="w-5 h-5 mr-2" />
+                <Sparkles className="w-5 h-5 mr-2" />
               )}
               {t('get_starter_pack')}
             </Button>
           </div>
         </motion.div>
 
-        {/* Super Pack Option - MAX VALUE */}
+        {/* Super Pack Option - BEST VALUE */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="relative mt-3"
         >
-          {/* Max Value Badge */}
+          {/* Best Value Badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-            <span className="px-3 py-1 bg-gradient-to-r from-coral to-orange-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+            <span className="px-3 py-1 bg-gradient-to-r from-lavender to-soft-pink text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
               <Crown className="w-3 h-3" />
-              {t('max_value') || 'MAX VALUE'}
+              {t('best_value')}
             </span>
           </div>
 
-          <div className="border-2 border-coral/50 rounded-2xl p-4 bg-gradient-to-br from-coral/5 to-orange-500/5">
+          <div className="border-2 border-lavender/50 rounded-2xl p-4 bg-gradient-to-br from-lavender/5 to-soft-pink/5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-coral" />
+                <Zap className="w-5 h-5 text-lavender" />
                 <span className="font-bold text-slate-800">{t('super_pack') || 'Super Pack'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-400 line-through">${(SPECIAL_PRICE * SUPER_PACK_STICKERS).toFixed(2)}</span>
-                <span className="text-xl font-bold text-coral">${SUPER_PACK_PRICE}</span>
+                <span className="text-xl font-bold text-slate-900">${SUPER_PACK_PRICE}</span>
               </div>
             </div>
 
@@ -379,15 +519,15 @@ export function CheckoutCard({
                 <span>{t('save_percent', { percent: SUPER_PACK_SAVINGS })}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Mail className="w-4 h-4 text-coral" />
-                <span>{t('codes_to_email')}</span>
+                <Mail className="w-4 h-4 text-lavender" />
+                <span>{t('super_pack_codes_to_email') || t('codes_to_email')}</span>
               </div>
             </div>
 
             <Button
-              variant="coral"
+              variant="secondary"
               size="lg"
-              className="w-full"
+              className="w-full border-2 border-lavender hover:bg-lavender/10"
               onClick={onPayForSuperPack}
               disabled={isProcessing}
             >
@@ -402,11 +542,83 @@ export function CheckoutCard({
         </motion.div>
       </div>
 
-      {/* Security Badge */}
-      <div className="flex items-center justify-center gap-2 mt-4 text-xs text-slate-500">
-        <Lock className="w-3 h-3" />
-        <span>{t('secure_payment')}</span>
-      </div>
+      {/* Trust Badges Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="mt-6 pt-4 border-t border-slate-200"
+      >
+        {/* Payment Methods */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <VisaIcon />
+          <MastercardIcon />
+          <ApplePayIcon />
+          <GooglePayIcon />
+        </div>
+
+        {/* Trust Guarantees */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <Shield className="w-4 h-4 text-green-500" />
+            <span>{t('guarantee') || '100% Satisfaction Guarantee'}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <Lock className="w-4 h-4 text-slate-400" />
+            <span>{t('secure_payment')}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <Zap className="w-4 h-4 text-coral" />
+            <span>{t('instant_delivery') || 'Instant delivery to your phone'}</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* FAQ Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="mt-6 pt-4 border-t border-slate-200"
+      >
+        <p className="text-xs font-medium text-slate-500 mb-3 text-center">{t('faq_title') || 'Frequently Asked Questions'}</p>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((faq, index) => (
+            <div
+              key={index}
+              className="border border-slate-200 rounded-xl overflow-hidden"
+            >
+              <button
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <span>{faq.question}</span>
+                <motion.div
+                  animate={{ rotate: openFaq === index ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                </motion.div>
+              </button>
+              <AnimatePresence>
+                {openFaq === index && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-4 pb-3 text-sm text-slate-600">
+                      {faq.answer}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }

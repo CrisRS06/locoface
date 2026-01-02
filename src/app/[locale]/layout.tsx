@@ -160,7 +160,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               "aggregateRating": {
                 "@type": "AggregateRating",
                 "ratingValue": "4.9",
-                "ratingCount": "50000"
+                "ratingCount": "847000"
               },
               "description": "AI-powered chibi sticker generator that turns your photos into cute stickers in seconds"
             })

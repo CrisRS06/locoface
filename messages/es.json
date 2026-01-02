@@ -17,7 +17,8 @@
     "stickers_made": "{count} stickers lindos creados",
     "loved_by": "Amado por {count} creadores felices",
     "stickers_created": "stickers creados",
-    "join_customers": "Unete a {count} clientes felices"
+    "join_customers": "Unete a {count} clientes felices",
+    "viewing_now": "viendo ahora"
   },
   "processing": {
     "preparing": "Preparando tu foto...",

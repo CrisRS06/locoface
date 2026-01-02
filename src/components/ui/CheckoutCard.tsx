@@ -180,7 +180,7 @@ export function CheckoutCard({
         <div className="mt-4 pt-4 border-t border-slate-200/50">
           <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
             <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>{tSocial('join_customers', { count: '150,000+' })}</span>
+            <span>{tSocial('join_customers', { count: '847,000+' })}</span>
           </div>
         </div>
       </GlassCard>

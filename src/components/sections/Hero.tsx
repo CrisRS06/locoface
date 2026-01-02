@@ -236,7 +236,7 @@ export function Hero({ onFileSelect, error }: HeroProps) {
         >
           <SocialProof
             rating={4.9}
-            stickerCount="50,000+"
+            stickerCount="847K+"
             variant="default"
           />
         </motion.div>
